@@ -6,7 +6,7 @@ import Starfield from './Starfield';
 
 const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w-28', h: 'h-28', inner: 'w-20 h-20' }, 3: { w: 'w-32', h: 'h-32', inner: 'w-24 h-24' } } as const;
 
-const BaseHQ: React.FC<{ level: number }> = ({ level }) => {
+const BaseHQ: React.FC<{ level: number, boostActive: boolean }> = ({ level, boostActive }) => {
   const language = useGameStore(state => state.language);
   const t = (translations as any)[language];
   const lvl = Math.max(1, Math.min(level, 3)) as 1 | 2 | 3;
@@ -19,10 +19,11 @@ const BaseHQ: React.FC<{ level: number }> = ({ level }) => {
       ${isHex ? 'clip-hex' : 'rounded-full'} ${isTier3 ? 'ring-2 ring-neon-gold/50' : ''}`}
       style={isHex ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
     >
-      <div className={`${sz.inner} bg-space-700 flex items-center justify-center animate-pulse ${isHex ? 'rounded-md' : 'rounded-lg'}`}
-        style={isTier3 ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
+      <div className={`${sz.inner} bg-space-700 flex items-center justify-center ${isHex ? 'rounded-md' : 'rounded-lg'} animate-pulse`}
+        style={isHex ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
       >
-        <Zap className={`text-neon-blue ${isTier3 ? 'w-10 h-10' : 'w-8 h-8'}`} />
+        <Zap className={`transition-all duration-300 ${isTier3 ? 'w-10 h-10' : 'w-8 h-8'} text-neon-blue drop-shadow-[0_0_8px_rgba(0,242,255,0.8)]
+          ${boostActive ? 'fill-current' : ''}`} />
       </div>
       {isTier3 && <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-1 h-4 bg-neon-blue rounded-b" />}
       <div className="absolute -bottom-6 text-xs font-orbitron neon-text-blue">{t.ui.hq_lvl}{lvl}</div>
@@ -37,7 +38,8 @@ const getBezierPoint = (t: number, p0: { x: number, y: number }, p1: { x: number
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel, manualMine, asteroids } = useGameStore();
+  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime } = useGameStore();
+  const boostActive = boostEndTime > Date.now();
 
   return (
     <div 
@@ -83,7 +85,7 @@ const CentralScene: React.FC = () => {
 
       
       {/* Central Base — 3 визуальных уровня */}
-      <BaseHQ level={baseLevel} />
+      <BaseHQ level={baseLevel} boostActive={boostActive} />
 
       {/* Drones — trajectory, rotation, color by state */}
       {drones.map((drone) => {

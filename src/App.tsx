@@ -3,7 +3,8 @@ import { useGameStore } from './store/gameStore';
 import { gameEngine } from './engine/GameEngine';
 import CentralScene from './ui/CentralScene';
 import UpgradeModal from './ui/UpgradeModal';
-import { Wallet, Package, Rocket, Zap, Sliders, Layout, Lock } from 'lucide-react';
+import MainMenu from './ui/MainMenu';
+import { Wallet, Package, Rocket, Zap, Sliders, Layout, Lock, Home } from 'lucide-react';
 import { translations } from './translations';
 
 const App: React.FC = () => {
@@ -12,10 +13,10 @@ const App: React.FC = () => {
     return () => gameEngine.stop();
   }, []);
 
-  const { credits, drones, storage, transport, startTransport, activateMiningBurst, boostEndTime, lastSaleTimestamp, language } = useGameStore();
+  const { credits, drones, storage, transport, startTransport, activateMiningBurst, boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'settings'>('upgrades');
+  const [modalTab, setModalTab] = useState<'upgrades' | 'drones'>('upgrades');
 
   const t = (translations as any)[language];
   const boostActive = boostEndTime > Date.now();
@@ -46,32 +47,41 @@ const App: React.FC = () => {
 
   const unlocked = credits >= 100 || drones.length > 1;
 
+  if (!isGameActive) {
+    return <MainMenu />;
+  }
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-space-900 overflow-hidden text-white font-sans">
+    <div className="h-[100dvh] w-screen flex flex-col bg-space-900 overflow-hidden text-white font-sans selection:bg-neon-blue/30">
       
       {/* 🔝 HUD (Верхняя панель) */}
-      <header className="h-16 border-b border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-6 justify-between z-50">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-            <Wallet className="text-neon-gold w-6 h-6 drop-shadow-[0_0_4px_rgba(255,215,0,0.5)]" />
-            <span className="text-2xl font-orbitron neon-text-gold tabular-nums tracking-wider transition-transform duration-100 hover:scale-[1.02] shadow-[0_0_8px_rgba(255,215,0,0.3)]">
-              {Math.floor(credits).toLocaleString()} <span className="text-xs">CR</span>
+      <header className="h-16 border-b border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-3 md:px-6 justify-between z-50 shrink-0">
+        {/* Left Side: Home & Credits */}
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <button 
+            onClick={exitToMenu}
+            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer"
+          >
+            <Home size={18} className="text-gray-300" />
+          </button>
+          
+          <div className="flex items-center gap-2 ml-1">
+            <Wallet className="text-neon-gold w-5 h-5 md:w-6 md:h-6 drop-shadow-[0_0_4px_rgba(255,215,0,0.5)]" />
+            <span className="text-lg md:text-2xl font-orbitron neon-text-gold tabular-nums tracking-wider transition-transform duration-100 hover:scale-[1.02]">
+              {Math.floor(credits).toLocaleString()} <span className="text-[10px] md:text-xs">CR</span>
             </span>
           </div>
-          {boostActive && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-neon-blue/20 border border-neon-blue">
-              <Zap className="text-neon-blue w-4 h-4 animate-pulse" />
-              <span className="text-xs font-mono text-neon-blue">{boostRemainingSec}s</span>
-            </div>
-          )}
         </div>
 
-        <div className="flex items-center gap-8">
-          <div className={`flex flex-col items-end gap-1 transition-all duration-300 ${storageFillRatio >= 1 ? 'ring-2 ring-neon-blue rounded-lg px-2 py-1 shadow-[0_0_20px_rgba(0,242,255,0.4)] animate-pulse' : ''}`}>
-            <div className="flex items-center gap-2 text-[10px] uppercase font-orbitron text-gray-400">
-              <Package size={12} /> {t.ui.storage} {Math.round(storageFillRatio * 100)}%
+        {/* Status Indicators */}
+        <div className="flex items-center gap-3 md:gap-8 flex-1 justify-end max-w-[500px]">
+          {/* Storage Bar - Expanded */}
+          <div className={`flex flex-col items-stretch gap-1 flex-1 transition-all duration-300 min-w-0 ${storageFillRatio >= 1 ? 'ring-1 ring-neon-blue rounded-lg px-2 py-1 shadow-[0_0_15px_rgba(0,242,255,0.3)] animate-pulse' : ''}`}>
+            <div className="flex items-center justify-between text-[8px] md:text-[10px] uppercase font-orbitron text-gray-400">
+              <span className="flex items-center gap-1 truncate"><Package size={10} /> {t.ui.storage}</span>
+              <span className="tabular-nums shrink-0">{Math.floor(currentStorage)}/{storage.capacity}</span>
             </div>
-            <div className="w-32 bg-space-700 h-1.5 rounded-full overflow-hidden border border-space-600">
+            <div className="bg-space-700 h-1.5 md:h-3 rounded-full overflow-hidden border border-space-600">
               <div 
                 className={`h-full transition-all duration-300 ${storageFillRatio > 0.9 ? 'bg-red-500 animate-pulse' : storageFillRatio > 0.7 ? 'bg-orange-500' : 'bg-neon-blue'}`} 
                 style={{ width: `${storageFillRatio * 100}%` }}
@@ -79,34 +89,38 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2 text-[10px] uppercase font-orbitron text-gray-400">
-              <Rocket size={12} /> {t.ui.transport} {transport.isActive ? (transport.state === 'offscreen_wait' ? t.ui.status_loading : t.ui.status_en_route) : t.ui.status_ready}
+          {/* Transport Status - Simple Badge */}
+          <div className="flex flex-col items-center gap-1 min-w-[65px] md:min-w-[100px] shrink-0">
+            <div className="text-[8px] md:text-[10px] uppercase font-orbitron text-gray-400 flex items-center gap-1">
+              <Rocket size={10} /> {t.ui.transport}
             </div>
-            <div className="w-32 bg-space-700 h-1.5 rounded-full overflow-hidden border border-space-600">
-              <div 
-                className="h-full bg-green-500 transition-all duration-100" 
-                style={{ width: `${transport.progress * 100}%` }}
-              />
+            <div className={`px-1.5 py-0.5 md:py-1 rounded text-[8px] md:text-[10px] font-orbitron border uppercase tracking-wider transition-all
+              ${!transport.isActive 
+                ? 'border-gray-700 text-gray-600 bg-space-800' 
+                : transport.state === 'offscreen_wait'
+                  ? 'border-orange-500 text-orange-500 bg-orange-500/10 shadow-[0_0_10px_rgba(249,115,22,0.2)] animate-pulse'
+                  : 'border-green-500 text-green-500 bg-green-500/10 shadow-[0_0_10px_rgba(34,197,94,0.2)]'
+              }`}>
+              {!transport.isActive ? t.ui.status_ready : (transport.state === 'offscreen_wait' ? t.ui.status_loading : t.ui.status_en_route)}
             </div>
           </div>
         </div>
       </header>
 
-      {/* 🌌 Центральная сцена — растягивается на весь свободный экран */}
+      {/* 🌌 Центральная сцена */}
       <div className={`flex-1 min-h-0 flex flex-col ${isShaking ? 'animate-shake' : ''}`}>
         <CentralScene />
       </div>
 
       {/* 🔘 Нижняя панель действий */}
-      <footer className="h-24 border-t border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-6 justify-around z-50">
+      <footer className="h-20 md:h-24 border-t border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-4 md:px-6 justify-center gap-2 md:gap-6 z-50 shrink-0">
         <button 
           onClick={() => activateMiningBurst()} 
-          className={`group relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 neon-border w-20 h-20 cursor-pointer
+          className={`group relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20 cursor-pointer
             ${boostActive ? 'bg-neon-blue/20 ring-2 ring-neon-blue shadow-[0_0_15px_rgba(0,242,255,0.4)]' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
         >
-          <Zap className={`mb-1 ${boostActive ? 'text-neon-blue animate-pulse' : 'text-neon-blue group-hover:scale-110'} transition-transform`} />
-          <span className="text-[10px] font-orbitron uppercase text-gray-400">
+          <Zap size={18} className={`mb-1 ${boostActive ? 'text-neon-blue animate-pulse' : 'text-neon-blue md:group-hover:scale-110'} transition-transform`} />
+          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">
             {boostActive ? `${boostRemainingSec}s` : t.ui.overclock}
           </span>
         </button>
@@ -114,53 +128,53 @@ const App: React.FC = () => {
         <button 
           onClick={() => !transport.isActive && currentStorage >= storage.capacity * 0.2 && startTransport()}
           disabled={transport.isActive || currentStorage < storage.capacity * 0.2}
-          className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 w-20 h-20 neon-border cursor-pointer
+          className={`relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 h-16 md:h-20 neon-border cursor-pointer
             ${transport.isActive || currentStorage < storage.capacity * 0.2 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
         >
-          <Rocket className="text-neon-gold mb-1" />
-          <span className="text-[10px] font-orbitron uppercase text-gray-400">{t.ui.send}</span>
+          <Rocket size={18} className="text-neon-gold mb-1" />
+          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.send}</span>
           {currentStorage < storage.capacity * 0.2 && !transport.isActive && (
-            <span className="absolute -top-6 text-[8px] text-gray-500 font-mono">min 20%</span>
+            <span className="absolute -top-4 md:-top-6 text-[7px] md:text-[8px] text-gray-500 font-mono whitespace-nowrap">min 20%</span>
           )}
         </button>
 
         <button 
           onClick={() => unlocked && openUpgradeModal('upgrades')}
-          className={`group/lock relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 neon-border w-20 h-20
+          className={`group/lock relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20
             ${unlocked ? 'bg-space-800 hover:bg-space-700 active:scale-95 cursor-pointer' : 'bg-space-800 opacity-60 cursor-not-allowed'}`}
           disabled={!unlocked}
         >
           {!unlocked && (
-            <div className="absolute -top-0.5 -right-0.5 bg-space-700 rounded p-0.5"><Lock className="text-gray-400 w-2.5 h-2.5" /></div>
+            <div className="absolute -top-0.5 -right-0.5 bg-space-700 rounded p-0.5"><Lock size={10} className="text-gray-400" /></div>
           )}
-          <Sliders className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
-          <span className="text-[10px] font-orbitron uppercase text-gray-400">{t.ui.upgrades}</span>
+          <Sliders size={18} className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
+          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.upgrades}</span>
           {!unlocked && (
-            <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[9px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[8px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
           )}
         </button>
 
         <button 
           onClick={() => unlocked && openUpgradeModal('drones')}
-          className={`group/lock relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 neon-border w-20 h-20
+          className={`group/lock relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20
             ${unlocked ? 'bg-space-800 hover:bg-space-700 active:scale-95 cursor-pointer' : 'bg-space-800 opacity-60 cursor-not-allowed'}`}
           disabled={!unlocked}
         >
           {!unlocked && (
-            <div className="absolute -top-0.5 -right-0.5 bg-space-700 rounded p-0.5"><Lock className="text-gray-400 w-2.5 h-2.5" /></div>
+            <div className="absolute -top-0.5 -right-0.5 bg-space-700 rounded p-0.5"><Lock size={10} className="text-gray-400" /></div>
           )}
-          <Layout className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
-          <span className="text-[10px] font-orbitron uppercase text-gray-400">{t.ui.drones}</span>
+          <Layout size={18} className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
+          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.drones}</span>
           {!unlocked && (
-            <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[9px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[8px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
           )}
         </button>
       </footer>
 
       {/* Stats Overlay (Bottom Right) */}
-      <div className="absolute bottom-28 right-6 text-right pointer-events-none opacity-60">
-        <div className="text-[10px] font-orbitron text-gray-400 uppercase tracking-widest">{t.ui.efficiency}</div>
-        <div className="text-xl font-mono">{(drones.reduce((sum, d) => sum + d.miningRate, 0)).toFixed(1)}/s</div>
+      <div className="absolute bottom-24 md:bottom-28 right-4 md:right-6 text-right pointer-events-none opacity-60">
+        <div className="text-[8px] md:text-[10px] font-orbitron text-gray-400 uppercase tracking-widest">{t.ui.efficiency}</div>
+        <div className="text-base md:text-xl font-mono">{(drones.reduce((sum, d) => sum + d.miningRate, 0)).toFixed(1)}/s</div>
       </div>
 
       <UpgradeModal 

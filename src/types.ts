@@ -88,6 +88,7 @@ export interface GameState {
     speed: number;
   };
   asteroids: ClickableAsteroid[];
+  isGameActive: boolean;
 }
 
 export interface ClickableAsteroid {
