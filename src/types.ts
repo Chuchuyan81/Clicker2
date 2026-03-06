@@ -1,0 +1,89 @@
+import { Language } from './translations';
+
+export type ResourceType = "metal";
+export type DroneType = 'basic' | 'scout' | 'heavy';
+
+export interface Resource {
+  id: ResourceType;
+  name: string;
+  basePrice: number;
+  rarity: number;
+}
+
+export type DroneState = 'flying_out' | 'offscreen_wait' | 'returning' | 'unloading_wait';
+export type TransportState = 'idle' | 'flying_out' | 'offscreen_wait' | 'returning';
+
+export interface Drone {
+  id: string;
+  type: DroneType;
+  speed: number;        // время полета в одну сторону в секундах
+  miningRate: number;   // ресурсов за цикл
+  capacity: number;
+  targetResource: ResourceType;
+  progress: number;     // 0 to 1
+  state: DroneState;
+  // Параметры траектории
+  angle: number;        // угол вылета
+  curveOffset: number;  // смещение для кривизны (bezier)
+  distance: number;     // дальность вылета
+  timer: number;        // таймер для состояний ожидания (мс)
+}
+
+export interface Upgrade {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  level: number;
+  maxLevel: number;
+  baseCost: number;
+  costMultiplier: number;
+}
+
+export interface Storage {
+  capacity: number;
+  current: Record<ResourceType, number>;
+}
+
+export interface Transport {
+  state: TransportState;
+  isActive: boolean;
+  travelTime: number;
+  progress: number; // 0 to 1
+  timer: number;    // таймер для состояний ожидания (мс)
+  // Параметры траектории
+  angle: number;        // угол вылета
+  curveOffset: number;  // смещение для кривизны (bezier)
+  distance: number;     // дальность вылета
+}
+
+export interface Notification {
+  id: string;
+  type: 'sale' | 'info';
+  value: string;
+  x: number;
+  y: number;
+  opacity: number;
+}
+
+export interface GameState {
+  credits: number;
+  lastSeen: number;
+  baseLevel: number;
+  boostEndTime: number;
+  boostMiningMultiplier: number;
+  lastSaleTimestamp: number;
+  resources: Record<ResourceType, Resource>;
+  drones: Drone[];
+  storage: Storage;
+  transport: Transport;
+  notifications: Notification[];
+  upgrades: Record<string, Upgrade>;
+  automationEnabled: boolean;
+  language: Language;
+  multipliers: {
+    price: number;
+    miningRate: number;
+    speed: number;
+  };
+}
