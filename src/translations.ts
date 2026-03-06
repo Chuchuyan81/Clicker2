@@ -24,6 +24,19 @@ export const translations = {
       language: "Язык",
       language_name: "Русский",
       hq_lvl: "База Ур.",
+      archive: "Архив",
+      resource_identified: "ОБЪЕКТ ИДЕНТИФИЦИРОВАН",
+      rarity: "Редкость",
+      value: "Ценность",
+      density: "Плотность",
+      hits_unit: "удара",
+      locked: "Заблокировано",
+      rarity_types: {
+        common: "Обычная",
+        uncommon: "Средняя",
+        rare: "Высокая",
+        legendary: "Исключительная"
+      }
     },
     resources: {
       metal: "Металл",
@@ -101,6 +114,19 @@ export const translations = {
       language: "Language",
       language_name: "English",
       hq_lvl: "HQ Lv.",
+      archive: "Archive",
+      resource_identified: "OBJECT IDENTIFIED",
+      rarity: "Rarity",
+      value: "Value",
+      density: "Density",
+      hits_unit: "hits",
+      locked: "Locked",
+      rarity_types: {
+        common: "Common",
+        uncommon: "Uncommon",
+        rare: "Rare",
+        legendary: "Legendary"
+      }
     },
     resources: {
       metal: "Metal",

@@ -16,7 +16,7 @@ const App: React.FC = () => {
   const { credits, drones, storage, transport, startTransport, activateMiningBurst, boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<'upgrades' | 'drones'>('upgrades');
+  const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive'>('upgrades');
 
   const t = (translations as any)[language];
   const boostActive = boostEndTime > Date.now();
@@ -40,7 +40,7 @@ const App: React.FC = () => {
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
   const storageFillRatio = currentStorage / storage.capacity;
 
-  const openUpgradeModal = (tab: 'upgrades' | 'drones') => {
+  const openUpgradeModal = (tab: 'upgrades' | 'drones' | 'archive') => {
     setModalTab(tab);
     setModalOpen(true);
   };
@@ -89,7 +89,10 @@ const App: React.FC = () => {
             </div>
             
             {/* Resource Breakdown */}
-            <div className="flex gap-2 mt-1 px-1">
+            <button 
+              onClick={() => openUpgradeModal('archive')}
+              className="flex gap-2 mt-1 px-1 hover:bg-white/5 rounded cursor-pointer transition-colors"
+            >
               {Object.entries(storage.current).map(([type, amount]) => {
                 if (amount === 0) return null;
                 const colors = {
@@ -105,7 +108,7 @@ const App: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
+            </button>
           </div>
 
           {/* Transport Status - Simple Badge */}

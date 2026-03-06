@@ -155,6 +155,7 @@ const INITIAL_STATE_DATA = {
     speed: 1,
   },
   isGameActive: false,
+  discoveredResources: ['metal' as ResourceType],
 };
 
 export const useGameStore = create<GameStore>()(
@@ -365,9 +366,19 @@ export const useGameStore = create<GameStore>()(
       },
 
       manualMine: (id, x, y) => {
-        const { addResourceToStorage, asteroids } = get();
+        const { addResourceToStorage, asteroids, discoveredResources } = get();
         const asteroid = asteroids.find(a => a.id === id);
         if (!asteroid) return;
+
+        // Check for first discovery
+        if (!discoveredResources.includes(asteroid.resourceType)) {
+          set((state) => ({
+            discoveredResources: [...state.discoveredResources, asteroid.resourceType]
+          }));
+          // We'll handle the visual popup via a specific notification type or listener
+          const t = (translations as any)[get().language];
+          get().addNotification('info', `NEW: ${t.resources[asteroid.resourceType]}`);
+        }
 
         const isLastHit = asteroid.hits + 1 >= asteroid.maxHits;
         const amount = isLastHit ? asteroid.maxHits * 2 : 0;
@@ -604,6 +615,7 @@ export const useGameStore = create<GameStore>()(
         multipliers: state.multipliers,
         lastSeen: state.lastSeen,
         isGameActive: state.isGameActive,
+        discoveredResources: state.discoveredResources,
       }),
     }
   )

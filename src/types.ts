@@ -89,6 +89,7 @@ export interface GameState {
   };
   asteroids: ClickableAsteroid[];
   isGameActive: boolean;
+  discoveredResources: ResourceType[];
 }
 
 export interface ClickableAsteroid {

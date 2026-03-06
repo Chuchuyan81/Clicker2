@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse } from 'lucide-react';
-import { DroneType } from '../types';
+import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Database, Lock, MousePointer2 } from 'lucide-react';
+import { DroneType, ResourceType } from '../types';
 import { translations } from '../translations';
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'upgrades' | 'drones';
+  initialTab?: 'upgrades' | 'drones' | 'archive';
 }
+
+const RESOURCE_COLORS: Record<ResourceType, string> = {
+  metal: 'bg-slate-500',
+  ice: 'bg-blue-400',
+  crystal: 'bg-purple-500',
+  iridium: 'bg-amber-500'
+};
 
 const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
   { type: 'basic', cost: 50 },
@@ -17,8 +24,8 @@ const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
 ];
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab = 'upgrades' }) => {
-  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones'>(initialTab);
-  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language } = useGameStore();
+  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones' | 'archive'>(initialTab);
+  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, resources, discoveredResources } = useGameStore();
 
   if (!isOpen) return null;
 
@@ -55,6 +62,12 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'drones' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.drone_fleet} ({drones.length}/{maxDrones})
+          </button>
+          <button
+            onClick={() => setActiveTab('archive')}
+            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'archive' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+          >
+            {t.ui.archive}
           </button>
         </div>
 
@@ -140,6 +153,54 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                       <span>{t.ui.purchase}</span>
                       <span className="text-neon-gold">{item.cost.toLocaleString()} CR</span>
                     </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : activeTab === 'archive' ? (
+            <div className="grid gap-4">
+              {Object.values(resources).map((res) => {
+                const isDiscovered = discoveredResources.includes(res.id);
+                const hits = res.id === 'metal' ? 1 : res.id === 'ice' ? 2 : 3;
+                const rarityKey = res.id === 'metal' ? 'common' : res.id === 'ice' ? 'uncommon' : res.id === 'crystal' ? 'rare' : 'legendary';
+
+                return (
+                  <div key={res.id} className={`bg-space-800 border rounded-xl p-4 flex items-center gap-4 transition-all
+                    ${isDiscovered ? 'border-space-700' : 'border-space-800 opacity-40 grayscale'}`}>
+                    <div className={`p-4 rounded-lg flex items-center justify-center relative
+                      ${isDiscovered ? RESOURCE_COLORS[res.id] : 'bg-space-700'}`}>
+                      <Database size={24} className={isDiscovered ? 'text-white/80' : 'text-gray-600'} />
+                      {!isDiscovered && <Lock size={12} className="absolute inset-0 m-auto text-white" />}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-orbitron text-sm text-white uppercase tracking-wider">
+                          {isDiscovered ? (t.resources as any)[res.id] : t.ui.locked}
+                        </h3>
+                        {isDiscovered && (
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded border border-white/10 uppercase
+                            ${res.id === 'metal' ? 'text-gray-400' : res.id === 'ice' ? 'text-blue-400' : res.id === 'crystal' ? 'text-purple-400' : 'text-amber-400'}`}>
+                            {(t.ui.rarity_types as any)[rarityKey]}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {isDiscovered ? (
+                        <div className="flex gap-4 items-center">
+                          <div className="flex items-center gap-1.5">
+                            <Zap size={10} className="text-neon-gold" />
+                            <span className="text-[10px] font-mono text-neon-gold">{res.basePrice} CR</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-gray-400">
+                            <MousePointer2 size={10} />
+                            <span className="text-[10px] font-mono">{hits} {t.ui.hits_unit}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-3 w-24 bg-space-700 rounded animate-pulse" />
+                      )}
+                    </div>
                   </div>
                 );
               })}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { Rocket, Zap } from 'lucide-react';
+import { Rocket, Zap, Search, MousePointer2 } from 'lucide-react';
 import { ResourceType } from '../types';
 import { translations } from '../translations';
 import Starfield from './Starfield';
@@ -46,8 +46,27 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime } = useGameStore();
+  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language } = useGameStore();
   const boostActive = boostEndTime > Date.now();
+  const t_ui = (translations as any)[language].ui;
+  const t_res = (translations as any)[language].resources;
+
+  const [discoveryPopup, setDiscoveryPopup] = useState<ResourceType | null>(null);
+  const lastDiscoveredCount = useRef(discoveredResources.length);
+
+  // Effect to catch new discoveries and show popup
+  useEffect(() => {
+    if (discoveredResources.length > lastDiscoveredCount.current) {
+      const newest = discoveredResources[discoveredResources.length - 1];
+      // Only show popup for things other than metal (metal is pre-discovered)
+      if (newest !== 'metal') {
+        setDiscoveryPopup(newest);
+        const timer = setTimeout(() => setDiscoveryPopup(null), 4000);
+        return () => clearTimeout(timer);
+      }
+    }
+    lastDiscoveredCount.current = discoveredResources.length;
+  }, [discoveredResources]);
 
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -343,6 +362,52 @@ const CentralScene: React.FC = () => {
             {n.value}
           </div>
         ))}
+
+        {/* Discovery Popup */}
+        {discoveryPopup && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in zoom-in slide-in-from-top-8 duration-500">
+            <div className={`p-1 rounded-2xl bg-gradient-to-br from-white/20 to-transparent border border-white/30 backdrop-blur-xl shadow-2xl overflow-hidden`}>
+              <div className={`flex flex-col items-center gap-3 px-8 py-6 rounded-xl bg-space-950/90 relative`}>
+                <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,242,255,0.05)_50%)] bg-[length:100%_4px] animate-pulse pointer-events-none" />
+                
+                <div className="flex flex-col items-center gap-1">
+                  <Search size={20} className="text-neon-blue animate-bounce" />
+                  <span className="text-[10px] font-orbitron text-neon-blue tracking-[0.3em] uppercase">
+                    {t_ui.resource_identified}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <h2 className="text-2xl font-orbitron text-white uppercase tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                    {t_res[discoveryPopup]}
+                  </h2>
+                  <div className={`w-full h-0.5 mt-2 bg-gradient-to-r from-transparent via-neon-blue to-transparent`} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 w-full mt-2">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase">{t_ui.value}</span>
+                    <div className="flex items-center gap-1">
+                      <Zap size={12} className="text-neon-gold" />
+                      <span className="text-sm font-mono text-neon-gold">
+                        {discoveryPopup === 'ice' ? '5' : discoveryPopup === 'crystal' ? '25' : '100'} CR
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase">{t_ui.density}</span>
+                    <div className="flex items-center gap-1">
+                      <MousePointer2 size={12} className="text-gray-300" />
+                      <span className="text-sm font-mono text-gray-300">
+                        {discoveryPopup === 'ice' ? '2' : '3'} {t_ui.hits_unit}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
