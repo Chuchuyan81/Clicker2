@@ -112,13 +112,16 @@ const App: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => !transport.isActive && currentStorage > 0 && startTransport()}
-          disabled={transport.isActive || currentStorage === 0}
+          onClick={() => !transport.isActive && currentStorage >= storage.capacity * 0.2 && startTransport()}
+          disabled={transport.isActive || currentStorage < storage.capacity * 0.2}
           className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200 w-20 h-20 neon-border cursor-pointer
-            ${transport.isActive || currentStorage === 0 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
+            ${transport.isActive || currentStorage < storage.capacity * 0.2 ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
         >
           <Rocket className="text-neon-gold mb-1" />
           <span className="text-[10px] font-orbitron uppercase text-gray-400">{t.ui.send}</span>
+          {currentStorage < storage.capacity * 0.2 && !transport.isActive && (
+            <span className="absolute -top-6 text-[8px] text-gray-500 font-mono">min 20%</span>
+          )}
         </button>
 
         <button 

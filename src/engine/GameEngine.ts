@@ -9,6 +9,14 @@ export class GameEngine {
   }
 
   public start() {
+    const { lastSeen, applyOfflineProgress } = useGameStore.getState();
+    const now = Date.now();
+    const diffInSeconds = Math.floor((now - lastSeen) / 1000);
+
+    if (diffInSeconds > 10) {
+      applyOfflineProgress(diffInSeconds);
+    }
+
     this.loop();
   }
 

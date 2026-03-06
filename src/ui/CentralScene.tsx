@@ -37,11 +37,50 @@ const getBezierPoint = (t: number, p0: { x: number, y: number }, p1: { x: number
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel } = useGameStore();
+  const { drones, transport, notifications, baseLevel, manualMine, asteroids } = useGameStore();
 
   return (
-    <div className="relative flex-1 w-full bg-space-950 overflow-hidden flex items-center justify-center border-y border-space-700">
+    <div 
+      className="relative flex-1 w-full bg-space-950 overflow-hidden flex items-center justify-center border-y border-space-700"
+    >
       <Starfield />
+      
+      {/* Clickable Asteroids */}
+      {asteroids.map(asteroid => (
+        <button
+          key={asteroid.id}
+          onClick={(e) => {
+            e.stopPropagation();
+            manualMine(asteroid.id, asteroid.x, asteroid.y);
+          }}
+          className="absolute z-10 transition-transform hover:scale-110 active:scale-95 cursor-pointer group"
+          style={{
+            left: `${asteroid.x}%`,
+            top: `${asteroid.y}%`,
+            width: `${asteroid.size}px`,
+            height: `${asteroid.size}px`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          {/* Asteroid Visual */}
+          <div 
+            className={`w-full h-full border rounded-lg rotate-45 shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-all relative overflow-hidden
+              ${asteroid.hits > 0 ? 'bg-slate-500 border-neon-blue' : 'bg-slate-600 border-slate-500'} 
+              group-hover:border-neon-blue`}
+          >
+             {/* Cracks/Texture */}
+             <div className="absolute top-1 left-1 w-1/2 h-1/2 bg-slate-700 rounded-full opacity-50" />
+             <div className="absolute bottom-2 right-2 w-1/3 h-1/3 bg-slate-800 rounded-full opacity-30" />
+             {/* Damage overlay */}
+             {asteroid.hits > 0 && (
+               <div className="absolute inset-0 bg-neon-blue/10 animate-pulse" />
+             )}
+          </div>
+          {/* Pulsing selection ring on hover */}
+          <div className="absolute inset-[-4px] border border-neon-blue/0 group-hover:border-neon-blue/40 rounded-full animate-pulse transition-colors" />
+        </button>
+      ))}
+
       
       {/* Central Base — 3 визуальных уровня */}
       <BaseHQ level={baseLevel} />
@@ -79,16 +118,16 @@ const CentralScene: React.FC = () => {
         const sizeCls = drone.type === 'scout' ? 'scale-75' : drone.type === 'heavy' ? 'scale-125' : '';
 
         return (
-          <div 
+            <div 
             key={drone.id}
             className={`absolute transition-all duration-75 z-20 ${sizeCls}`}
             style={{ 
-              transform: `translate(${pos.x}px, ${pos.y}px) rotate(${drone.angle * (180/Math.PI) + (isLoaded ? 180 : 0)}deg)`,
+              transform: `translate(${pos.x}px, ${pos.y}px) rotate(${drone.angle * (180/Math.PI) + (isLoaded ? 180 : 0) + 90}deg)`,
             }}
           >
             {/* Реактивный след дрона */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-6 -translate-y-full blur-[1px] opacity-60">
-               <div className="w-full h-full bg-gradient-to-t from-neon-blue to-transparent animate-engine rounded-full" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-6 translate-y-full blur-[1px] opacity-60">
+               <div className="w-full h-full bg-gradient-to-b from-neon-blue to-transparent animate-engine rounded-full" />
             </div>
 
             <div className={`relative p-1 rounded bg-space-800 border ${borderCls}`}>
@@ -134,17 +173,17 @@ const CentralScene: React.FC = () => {
             }}
           >
             {/* Реактивный след транспорта (двигатели) */}
-            <div className="absolute top-0 flex gap-2 -translate-y-full blur-[2px] opacity-80">
+            <div className="absolute bottom-0 flex gap-2 translate-y-full blur-[2px] opacity-80">
               {[0, 1, 2].map(i => (
                 <div key={i} className="w-2 h-12">
-                  <div className="w-full h-full bg-gradient-to-t from-neon-gold via-orange-500 to-transparent animate-engine rounded-full" 
+                  <div className="w-full h-full bg-gradient-to-b from-neon-gold via-orange-500 to-transparent animate-engine rounded-full" 
                        style={{ animationDelay: `${i * 0.05}s` }} />
                 </div>
               ))}
             </div>
 
             {/* Корпус транспорта (своя форма) */}
-            <div className="relative z-10 flex flex-col items-center">
+            <div className="relative z-10 flex flex-col items-center rotate-180">
               {/* Кабина */}
               <div className="w-4 h-3 bg-neon-blue/30 border border-neon-blue rounded-t-full mb-[-1px]" />
               {/* Основной корпус */}

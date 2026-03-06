@@ -87,4 +87,15 @@ export interface GameState {
     miningRate: number;
     speed: number;
   };
+  asteroids: ClickableAsteroid[];
+}
+
+export interface ClickableAsteroid {
+  id: string;
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
+  angle: number;
+  hits: number;
 }
