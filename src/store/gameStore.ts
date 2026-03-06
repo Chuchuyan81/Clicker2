@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, Language } from '../types';
-import { translations } from '../translations';
+import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade } from '../types';
+import { translations, Language } from '../translations';
 
 interface GameStore extends GameState {
   addCredits: (amount: number) => void;
@@ -213,8 +213,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         };
       });
 
-      get().addNotification('info', translations[get().language].notifications.upgrade_success
-        .replace('{name}', translations[get().language].upgrades[id].name)
+    const t = (translations as any)[get().language];
+    get().addNotification('info', (t.notifications.upgrade_success as string)
+        .replace('{name}', (t.upgrades as any)[id].name)
         .replace('{level}', newLevel.toString()));
       return true;
     }
@@ -335,25 +336,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   startTransport: () => {
-    set((state) => ({
-      transport: { 
-        ...state.transport, 
-        isActive: true, 
-        state: 'flying_out', 
-        progress: 0, 
-        timer: 0,
-        // Нижняя половина (0 - PI), ограничим до (0.1 PI - 0.9 PI) для эстетики
-        angle: (0.1 + Math.random() * 0.8) * Math.PI,
-        curveOffset: (Math.random() - 0.5) * 150,
-        distance: 600 + Math.random() * 200,
-      },
-    }));
+    const { storage, resources, multipliers, addCredits } = get();
+    
+    // Считаем доход СРАЗУ при вылете
+    let totalEarned = 0;
+    const newStorageCurrent = { ...storage.current };
+
+    (Object.keys(newStorageCurrent) as ResourceType[]).forEach((resId) => {
+      const amount = newStorageCurrent[resId];
+      const resource = resources[resId];
+      totalEarned += amount * resource.basePrice * multipliers.price;
+      newStorageCurrent[resId] = 0;
+    });
+
+    if (totalEarned > 0) {
+      addCredits(totalEarned);
+      get().addNotification('sale', `+${Math.floor(totalEarned)} CR`);
+      
+      set((state) => ({
+        storage: { ...state.storage, current: newStorageCurrent },
+        transport: { 
+          ...state.transport, 
+          isActive: true, 
+          state: 'flying_out', 
+          progress: 0, 
+          timer: 0,
+          angle: (0.1 + Math.random() * 0.8) * Math.PI,
+          curveOffset: (Math.random() - 0.5) * 150,
+          distance: 600 + Math.random() * 200,
+        },
+      }));
+    }
   },
 
   updateTransport: (deltaTime) => {
-    const { transport, storage, resources, multipliers, addCredits, startTransport, automationEnabled } = get();
+    const { transport, storage, startTransport, automationEnabled } = get();
     
-    // Auto-start transport if storage is full or automation threshold reached
     if (!transport.isActive) {
       const totalCurrent = Object.values(storage.current).reduce((a, b) => a + b, 0);
       const threshold = automationEnabled ? storage.capacity * 0.8 : storage.capacity;
@@ -367,8 +385,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { state: transportState, progress, timer, travelTime } = transport;
 
     if (transportState === 'flying_out' || transportState === 'returning') {
-      let newProgress = progress + (deltaTime / 1000) / (travelTime / 2); // travelTime total for both ways?
-      // Actually let's use travelTime as the time for ONE way to be consistent with drones
+      let newProgress = progress + (deltaTime / 1000) / (travelTime / 2);
       
       if (newProgress >= 1) {
         newProgress = 1;
@@ -389,25 +406,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else if (transportState === 'offscreen_wait') {
       let newTimer = timer - deltaTime;
       if (newTimer <= 0) {
-        // Полет завершен за экраном, считаем доход
-        let totalEarned = 0;
-        const newStorageCurrent = { ...storage.current };
-
-        (Object.keys(newStorageCurrent) as ResourceType[]).forEach((resId) => {
-          const amount = newStorageCurrent[resId];
-          const resource = resources[resId];
-          totalEarned += amount * resource.basePrice * multipliers.price;
-          newStorageCurrent[resId] = 0;
-        });
-
-        addCredits(totalEarned);
-        if (totalEarned > 0) {
-          get().addNotification('sale', `+${Math.floor(totalEarned)} CR`);
-        }
-
         set((state) => ({
           transport: { ...state.transport, state: 'returning', progress: 0, timer: 0 },
-          storage: { ...state.storage, current: newStorageCurrent },
         }));
       } else {
         set((state) => ({

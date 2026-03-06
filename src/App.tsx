@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'settings'>('upgrades');
 
-  const t = translations[language];
+  const t = (translations as any)[language];
   const boostActive = boostEndTime > Date.now();
   const boostRemainingSec = Math.max(0, Math.ceil((boostEndTime - Date.now()) / 1000));
 

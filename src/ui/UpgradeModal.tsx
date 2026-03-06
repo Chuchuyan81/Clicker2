@@ -22,7 +22,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
 
   if (!isOpen) return null;
 
-  const t = translations[language];
+  const t = (translations as any)[language];
   const hangarLevel = upgrades.hangar?.level || 0;
   const maxDrones = 1 + hangarLevel;
 
@@ -167,7 +167,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                           ? 'bg-neon-blue/20 border-neon-blue text-neon-blue shadow-[0_0_10px_rgba(0,242,255,0.2)]' 
                           : 'bg-space-800 border-space-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}
                     >
-                      {translations[lang].ui.language_name}
+                      {(translations[lang] as any).ui.language_name}
                     </button>
                   ))}
                 </div>

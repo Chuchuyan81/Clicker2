@@ -2,12 +2,13 @@ import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Rocket, Zap } from 'lucide-react';
 import { translations } from '../translations';
+import Starfield from './Starfield';
 
 const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w-28', h: 'h-28', inner: 'w-20 h-20' }, 3: { w: 'w-32', h: 'h-32', inner: 'w-24 h-24' } } as const;
 
 const BaseHQ: React.FC<{ level: number }> = ({ level }) => {
   const language = useGameStore(state => state.language);
-  const t = translations[language];
+  const t = (translations as any)[language];
   const lvl = Math.max(1, Math.min(level, 3)) as 1 | 2 | 3;
   const sz = BASE_SIZES[lvl];
   const isHex = lvl >= 2;
@@ -39,10 +40,8 @@ const CentralScene: React.FC = () => {
   const { drones, transport, notifications, baseLevel } = useGameStore();
 
   return (
-    <div className="relative flex-1 w-full bg-space-900 overflow-hidden flex items-center justify-center border-y border-space-700">
-      {/* Background layers — глубина */}
-      <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(white_1px,transparent_1px)] bg-[length:40px_40px] animate-drift" />
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(white_1px,transparent_1px)] bg-[length:20px_20px]" />
+    <div className="relative flex-1 w-full bg-space-950 overflow-hidden flex items-center justify-center border-y border-space-700">
+      <Starfield />
       
       {/* Central Base — 3 визуальных уровня */}
       <BaseHQ level={baseLevel} />
@@ -87,6 +86,11 @@ const CentralScene: React.FC = () => {
               transform: `translate(${pos.x}px, ${pos.y}px) rotate(${drone.angle * (180/Math.PI) + (isLoaded ? 180 : 0)}deg)`,
             }}
           >
+            {/* Реактивный след дрона */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-6 -translate-y-full blur-[1px] opacity-60">
+               <div className="w-full h-full bg-gradient-to-t from-neon-blue to-transparent animate-engine rounded-full" />
+            </div>
+
             <div className={`relative p-1 rounded bg-space-800 border ${borderCls}`}>
               <div className={`w-2 h-2 rounded-full ${isLoaded ? 'bg-yellow-400' : 'bg-neon-blue'} animate-pulse`} />
             </div>
@@ -129,18 +133,36 @@ const CentralScene: React.FC = () => {
               opacity: 1 - (transport.state === 'flying_out' ? transport.progress : 1 - transport.progress) * 0.4,
             }}
           >
-            <div 
-              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 rounded-full opacity-50"
-              style={{
-                background: 'linear-gradient(to top, rgba(255,215,0,0.5), transparent)',
-                height: `40px`,
-                transformOrigin: 'bottom center',
-              }}
-            />
-            <div className="text-neon-gold mb-1 relative z-10">
-              <Rocket size={40} />
+            {/* Реактивный след транспорта (двигатели) */}
+            <div className="absolute top-0 flex gap-2 -translate-y-full blur-[2px] opacity-80">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-2 h-12">
+                  <div className="w-full h-full bg-gradient-to-t from-neon-gold via-orange-500 to-transparent animate-engine rounded-full" 
+                       style={{ animationDelay: `${i * 0.05}s` }} />
+                </div>
+              ))}
             </div>
-            <div className="bg-space-800 px-2 py-0.5 rounded text-[10px] font-mono border border-neon-gold">
+
+            {/* Корпус транспорта (своя форма) */}
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Кабина */}
+              <div className="w-4 h-3 bg-neon-blue/30 border border-neon-blue rounded-t-full mb-[-1px]" />
+              {/* Основной корпус */}
+              <div className="w-10 h-16 bg-space-800 border-2 border-neon-gold rounded-b-lg flex flex-col items-center justify-between p-1 shadow-[0_0_15px_rgba(255,215,0,0.2)]">
+                <div className="w-full h-1 bg-neon-gold/20 rounded-full" />
+                <div className="flex flex-col gap-1 w-full px-1">
+                  <div className="w-full h-2 bg-space-700 border border-space-600 rounded-sm" />
+                  <div className="w-full h-2 bg-space-700 border border-space-600 rounded-sm" />
+                  <div className="w-full h-2 bg-space-700 border border-space-600 rounded-sm" />
+                </div>
+                <div className="w-full h-1 bg-neon-gold/20 rounded-full" />
+              </div>
+              {/* Боковые закрылки */}
+              <div className="absolute -left-3 top-6 w-3 h-8 bg-space-800 border-l-2 border-y-2 border-neon-gold rounded-l-md" />
+              <div className="absolute -right-3 top-6 w-3 h-8 bg-space-800 border-r-2 border-y-2 border-neon-gold rounded-r-md" />
+            </div>
+
+            <div className="mt-2 bg-space-900/80 px-2 py-0.5 rounded text-[10px] font-mono border border-neon-gold/50 backdrop-blur-sm">
               {Math.floor(transport.progress * 100)}%
             </div>
           </div>
