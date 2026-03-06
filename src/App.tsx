@@ -4,7 +4,7 @@ import { gameEngine } from './engine/GameEngine';
 import CentralScene from './ui/CentralScene';
 import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
-import { Wallet, Package, Rocket, Zap, Sliders, Layout, Lock, Home } from 'lucide-react';
+import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home } from 'lucide-react';
 import { translations } from './translations';
 
 const App: React.FC = () => {
@@ -87,6 +87,25 @@ const App: React.FC = () => {
                 style={{ width: `${storageFillRatio * 100}%` }}
               />
             </div>
+            
+            {/* Resource Breakdown */}
+            <div className="flex gap-2 mt-1 px-1">
+              {Object.entries(storage.current).map(([type, amount]) => {
+                if (amount === 0) return null;
+                const colors = {
+                  metal: 'bg-slate-500',
+                  ice: 'bg-blue-400',
+                  crystal: 'bg-purple-500',
+                  iridium: 'bg-amber-500'
+                };
+                return (
+                  <div key={type} className="flex items-center gap-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${colors[type as keyof typeof colors]}`} />
+                    <span className="text-[7px] md:text-[8px] font-mono text-gray-400">{Math.floor(amount)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Transport Status - Simple Badge */}
@@ -149,22 +168,6 @@ const App: React.FC = () => {
           )}
           <Sliders size={18} className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
           <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.upgrades}</span>
-          {!unlocked && (
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[8px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
-          )}
-        </button>
-
-        <button 
-          onClick={() => unlocked && openUpgradeModal('drones')}
-          className={`group/lock relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20
-            ${unlocked ? 'bg-space-800 hover:bg-space-700 active:scale-95 cursor-pointer' : 'bg-space-800 opacity-60 cursor-not-allowed'}`}
-          disabled={!unlocked}
-        >
-          {!unlocked && (
-            <div className="absolute -top-0.5 -right-0.5 bg-space-700 rounded p-0.5"><Lock size={10} className="text-gray-400" /></div>
-          )}
-          <Layout size={18} className={`${unlocked ? 'text-neon-blue' : 'text-white'} mb-1`} />
-          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.drones}</span>
           {!unlocked && (
             <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-space-700 text-[8px] opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-space-600">{t.ui.unlock_at} 100 CR</span>
           )}

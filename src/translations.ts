@@ -25,6 +25,12 @@ export const translations = {
       language_name: "Русский",
       hq_lvl: "База Ур.",
     },
+    resources: {
+      metal: "Металл",
+      ice: "Космический лед",
+      crystal: "Кристаллы",
+      iridium: "Иридий",
+    },
     upgrades: {
       refinery: {
         name: "Завод",
@@ -95,6 +101,12 @@ export const translations = {
       language: "Language",
       language_name: "English",
       hq_lvl: "HQ Lv.",
+    },
+    resources: {
+      metal: "Metal",
+      ice: "Space Ice",
+      crystal: "Crystals",
+      iridium: "Iridium",
     },
     upgrades: {
       refinery: {

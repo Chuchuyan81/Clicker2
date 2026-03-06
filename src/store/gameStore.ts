@@ -78,6 +78,24 @@ const INITIAL_RESOURCES: Record<ResourceType, Resource> = {
     basePrice: 1,
     rarity: 1,
   },
+  ice: {
+    id: 'ice',
+    name: 'Космический лед',
+    basePrice: 5,
+    rarity: 0.5,
+  },
+  crystal: {
+    id: 'crystal',
+    name: 'Кристаллы',
+    basePrice: 25,
+    rarity: 0.2,
+  },
+  iridium: {
+    id: 'iridium',
+    name: 'Иридий',
+    basePrice: 100,
+    rarity: 0.05,
+  },
 };
 
 const BOOST_DURATION_MS = 10_000;
@@ -115,6 +133,9 @@ const INITIAL_STATE_DATA = {
     capacity: 100,
     current: {
       metal: 0,
+      ice: 0,
+      crystal: 0,
+      iridium: 0,
     },
   },
   transport: {
@@ -289,43 +310,54 @@ export const useGameStore = create<GameStore>()(
         const { drones, storage, multipliers, resources, automationEnabled, addCredits, language } = get();
         const t = (translations as any)[language];
         
-        // Считаем общую скорость добычи
-        const totalMiningRate = drones.reduce((sum, d) => sum + d.miningRate, 0) * multipliers.miningRate;
-        const resourcesMined = Math.floor(totalMiningRate * seconds);
+        // Calculate mined resources per type
+        const minedByType: Partial<Record<ResourceType, number>> = {};
+        drones.forEach(d => {
+          const amount = Math.floor(d.miningRate * multipliers.miningRate * seconds);
+          minedByType[d.targetResource] = (minedByType[d.targetResource] || 0) + amount;
+        });
         
+        const totalResourcesMined = Object.values(minedByType).reduce((a, b) => a + b, 0);
         let earnedCredits = 0;
-        let finalResourcesInStorage = 0;
-
-        const currentTotal = Object.values(storage.current).reduce((a, b) => a + b, 0);
+        const newStorageCurrent = { ...storage.current };
         const capacity = storage.capacity;
         
-        if (automationEnabled) {
-          // Если есть автоматизация, считаем сколько циклов транспорта могло пройти
-          const totalAfterMining = currentTotal + resourcesMined;
-          if (totalAfterMining > capacity * 0.8) {
-             const toSell = totalAfterMining; // Продаем всё накопленное + добытое
-             earnedCredits = Math.floor(toSell * resources.metal.basePrice * multipliers.price);
-             finalResourcesInStorage = 0;
-          } else {
-             finalResourcesInStorage = totalAfterMining;
-          }
-        } else {
-          // Без автоматизации ресурсы просто копятся до лимита склада
-          finalResourcesInStorage = Math.min(capacity, currentTotal + resourcesMined);
+        // Add to storage
+        Object.entries(minedByType).forEach(([type, amount]) => {
+          const resType = type as ResourceType;
+          newStorageCurrent[resType] = (newStorageCurrent[resType] || 0) + amount;
+        });
+
+        const currentTotal = Object.values(newStorageCurrent).reduce((a, b) => a + b, 0);
+        
+        if (automationEnabled && currentTotal > capacity * 0.8) {
+          // Sell everything
+          Object.entries(newStorageCurrent).forEach(([type, amount]) => {
+            const resType = type as ResourceType;
+            earnedCredits += amount * resources[resType].basePrice * multipliers.price;
+            newStorageCurrent[resType] = 0;
+          });
+        } else if (currentTotal > capacity) {
+          // Cap storage proportionally
+          const factor = capacity / currentTotal;
+          Object.keys(newStorageCurrent).forEach(type => {
+            const resType = type as ResourceType;
+            newStorageCurrent[resType] = Math.floor(newStorageCurrent[resType] * factor);
+          });
         }
 
-        if (resourcesMined > 0 || earnedCredits > 0) {
-          addCredits(earnedCredits);
+        if (totalResourcesMined > 0 || earnedCredits > 0) {
+          if (earnedCredits > 0) addCredits(earnedCredits);
           set((state) => ({
             storage: {
               ...state.storage,
-              current: { ...state.storage.current, metal: finalResourcesInStorage }
+              current: newStorageCurrent
             },
             lastSeen: Date.now()
           }));
 
           const msg = t.notifications.offline_income
-            .replace('{resources}', resourcesMined.toString())
+            .replace('{resources}', totalResourcesMined.toLocaleString())
             .replace('{credits}', Math.floor(earnedCredits).toLocaleString());
             
           get().addNotification('info', msg);
@@ -337,29 +369,33 @@ export const useGameStore = create<GameStore>()(
         const asteroid = asteroids.find(a => a.id === id);
         if (!asteroid) return;
 
-        const added = addResourceToStorage('metal', 2);
+        const isLastHit = asteroid.hits + 1 >= asteroid.maxHits;
+        const amount = isLastHit ? asteroid.maxHits * 2 : 0;
+        
+        let added = true;
+        if (amount > 0) {
+          added = addResourceToStorage(asteroid.resourceType, amount);
+        }
+
         if (added) {
-          set((state) => {
-            const isLastHit = asteroid.hits >= 2; // 3-й клик удаляет
-            return {
-              asteroids: isLastHit 
-                ? state.asteroids.filter(a => a.id !== id)
-                : state.asteroids.map(a => a.id === id 
-                    ? { ...a, hits: a.hits + 1, speed: 0.5, size: a.size * 0.9 } // Замедляем и немного уменьшаем
-                    : a),
-              notifications: [
-                ...state.notifications,
-                {
-                  id: Math.random().toString(36).substr(2, 9),
-                  type: 'info',
-                  value: '+2',
-                  x,
-                  y,
-                  opacity: 1,
-                }
-              ]
-            };
-          });
+          set((state) => ({
+            asteroids: isLastHit 
+              ? state.asteroids.filter(a => a.id !== id)
+              : state.asteroids.map(a => a.id === id 
+                  ? { ...a, hits: a.hits + 1, speed: 0.3, size: a.size * 0.95 }
+                  : a),
+            notifications: amount > 0 ? [
+              ...state.notifications,
+              {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'info',
+                value: `+${amount}`,
+                x,
+                y,
+                opacity: 1,
+              }
+            ] : state.notifications
+          }));
         }
       },
 
@@ -388,12 +424,23 @@ export const useGameStore = create<GameStore>()(
             else if (side === 2) { x = Math.random() * 100; y = 105; angle = -Math.PI / 4 - Math.random() * Math.PI / 2; }
             else { x = -5; y = Math.random() * 100; angle = -Math.PI / 4 + Math.random() * Math.PI / 2; }
 
+            const rand = Math.random();
+            let resType: ResourceType = 'metal';
+            let maxHits = 1;
+            
+            if (rand < 0.05) { resType = 'iridium'; maxHits = 3; }
+            else if (rand < 0.15) { resType = 'crystal'; maxHits = 3; }
+            else if (rand < 0.40) { resType = 'ice'; maxHits = 2; }
+            else { resType = 'metal'; maxHits = 1; }
+
             newAsteroids.push({
               id: `ast-${Math.random().toString(36).substr(2, 9)}`,
               x, y, angle,
-              size: 15 + Math.random() * 20,
-              speed: 2 + Math.random() * 4, // Было 5-15, стало 2-6
-              hits: 0
+              size: 15 + Math.random() * 20 + (maxHits * 10),
+              speed: 1.0 + Math.random() * 2,
+              hits: 0,
+              maxHits,
+              resourceType: resType
             });
           }
           // ------------------------

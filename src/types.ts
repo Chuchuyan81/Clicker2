@@ -1,7 +1,7 @@
 import { Language } from './translations';
 export type { Language };
 
-export type ResourceType = "metal";
+export type ResourceType = "metal" | "ice" | "crystal" | "iridium";
 export type DroneType = 'basic' | 'scout' | 'heavy';
 
 export interface Resource {
@@ -99,4 +99,6 @@ export interface ClickableAsteroid {
   speed: number;
   angle: number;
   hits: number;
+  maxHits: number;
+  resourceType: ResourceType;
 }
