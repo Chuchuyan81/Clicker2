@@ -1,4 +1,5 @@
 import { Language } from './translations';
+export type { Language };
 
 export type ResourceType = "metal";
 export type DroneType = 'basic' | 'scout' | 'heavy';
