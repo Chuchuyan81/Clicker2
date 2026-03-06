@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Settings, Globe } from 'lucide-react';
-import { DroneType, Language } from '../types';
+import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse } from 'lucide-react';
+import { DroneType } from '../types';
 import { translations } from '../translations';
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'upgrades' | 'drones' | 'settings';
+  initialTab?: 'upgrades' | 'drones';
 }
 
 const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
@@ -17,8 +17,8 @@ const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
 ];
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab = 'upgrades' }) => {
-  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones' | 'settings'>(initialTab);
-  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, setLanguage } = useGameStore();
+  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones'>(initialTab);
+  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language } = useGameStore();
 
   if (!isOpen) return null;
 
@@ -55,12 +55,6 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'drones' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.drone_fleet} ({drones.length}/{maxDrones})
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'settings' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
-          >
-            {t.ui.settings}
           </button>
         </div>
 
@@ -150,36 +144,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                 );
               })}
             </div>
-          ) : (
-            <div className="grid gap-6 p-4">
-              <div className="flex flex-col gap-3">
-                <label className="text-xs font-orbitron text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Globe size={14} className="text-neon-blue" />
-                  {t.ui.language}
-                </label>
-                <div className="flex gap-2">
-                  {(['ru', 'en'] as Language[]).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setLanguage(lang)}
-                      className={`flex-1 py-3 px-4 rounded-xl border font-orbitron text-xs transition-all cursor-pointer
-                        ${language === lang 
-                          ? 'bg-neon-blue/20 border-neon-blue text-neon-blue shadow-[0_0_10px_rgba(0,242,255,0.2)]' 
-                          : 'bg-space-800 border-space-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}
-                    >
-                      {(translations[lang] as any).ui.language_name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-space-700">
-                <div className="text-[10px] text-gray-600 font-orbitron text-center uppercase tracking-widest opacity-50">
-                  Asteroid Logistics Prototype v1.2
-                </div>
-              </div>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

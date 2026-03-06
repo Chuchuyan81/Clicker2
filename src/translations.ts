@@ -61,6 +61,13 @@ export const translations = {
       new_drone: "Куплен новый {name}!",
       upgrade_success: "{name} улучшен до уровня {level}!",
       offline_income: "Пока вас не было, дроны добыли {resources} ресурсов и заработали {credits} CR!",
+    },
+    menu: {
+      continue: "Продолжить",
+      new_game: "Новая игра",
+      settings: "Настройки",
+      confirm_new_game: "Начать новую игру? Текущий прогресс будет удален.",
+      back: "Назад",
     }
   },
   en: {
@@ -125,6 +132,13 @@ export const translations = {
       new_drone: "New {name} Purchased!",
       upgrade_success: "{name} Upgraded to Lv.{level}!",
       offline_income: "While you were away, drones mined {resources} resources and earned {credits} CR!",
+    },
+    menu: {
+      continue: "Continue",
+      new_game: "New Game",
+      settings: "Settings",
+      confirm_new_game: "Start new game? Current progress will be lost.",
+      back: "Back",
     }
   }
 };

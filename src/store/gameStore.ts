@@ -17,6 +17,9 @@ interface GameStore extends GameState {
   setLanguage: (lang: Language) => void;
   applyOfflineProgress: (seconds: number) => void;
   manualMine: (id: string, x: number, y: number) => void;
+  startGame: () => void;
+  exitToMenu: () => void;
+  resetGame: () => void;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string }> = {
@@ -80,58 +83,63 @@ const INITIAL_RESOURCES: Record<ResourceType, Resource> = {
 const BOOST_DURATION_MS = 10_000;
 const BOOST_MINING_MULTIPLIER = 1.5;
 
+const INITIAL_STATE_DATA = {
+  credits: 0,
+  lastSeen: Date.now(),
+  baseLevel: 1,
+  boostEndTime: 0,
+  boostMiningMultiplier: 1,
+  lastSaleTimestamp: 0,
+  resources: INITIAL_RESOURCES,
+  automationEnabled: false,
+  language: 'ru' as Language,
+  upgrades: INITIAL_UPGRADES,
+  asteroids: [],
+  drones: [
+    {
+      id: 'drone-1',
+      type: 'basic' as DroneType,
+      speed: 3,
+      miningRate: 5,
+      capacity: 50,
+      targetResource: 'metal' as ResourceType,
+      progress: 0,
+      state: 'flying_out' as const,
+      angle: Math.PI + Math.random() * Math.PI,
+      curveOffset: (Math.random() - 0.5) * 100,
+      distance: 500 + Math.random() * 300,
+      timer: 0,
+    },
+  ],
+  storage: {
+    capacity: 100,
+    current: {
+      metal: 0,
+    },
+  },
+  transport: {
+    state: 'idle' as const,
+    isActive: false,
+    travelTime: 10,
+    progress: 0,
+    timer: 0,
+    angle: 0,
+    curveOffset: 0,
+    distance: 0,
+  },
+  notifications: [],
+  multipliers: {
+    price: 1,
+    miningRate: 1,
+    speed: 1,
+  },
+  isGameActive: false,
+};
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
-      credits: 0,
-      lastSeen: Date.now(),
-      baseLevel: 1,
-      boostEndTime: 0,
-      boostMiningMultiplier: 1,
-      lastSaleTimestamp: 0,
-      resources: INITIAL_RESOURCES,
-      automationEnabled: false,
-      language: 'ru',
-      upgrades: INITIAL_UPGRADES,
-      asteroids: [],
-      drones: [
-        {
-          id: 'drone-1',
-          type: 'basic',
-          speed: 5,
-          miningRate: 5, // +5% от текущего хранилища (100)
-          capacity: 50,
-          targetResource: 'metal',
-          progress: 0,
-          state: 'flying_out',
-          angle: Math.PI + Math.random() * Math.PI, // Верхняя половина
-          curveOffset: (Math.random() - 0.5) * 100,
-          distance: 500 + Math.random() * 300,
-          timer: 0,
-        },
-      ],
-      storage: {
-        capacity: 100,
-        current: {
-          metal: 0,
-        },
-      },
-      transport: {
-        state: 'idle',
-        isActive: false,
-        travelTime: 10,
-        progress: 0,
-        timer: 0,
-        angle: 0,
-        curveOffset: 0,
-        distance: 0,
-      },
-      notifications: [],
-      multipliers: {
-        price: 1,
-        miningRate: 1,
-        speed: 1,
-      },
+      ...INITIAL_STATE_DATA,
 
       addCredits: (amount) => set((state) => ({ credits: state.credits + amount })),
 
@@ -355,6 +363,12 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
+      startGame: () => set({ isGameActive: true }),
+
+      exitToMenu: () => set({ isGameActive: false }),
+
+      resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
+
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
@@ -542,6 +556,7 @@ export const useGameStore = create<GameStore>()(
         language: state.language,
         multipliers: state.multipliers,
         lastSeen: state.lastSeen,
+        isGameActive: state.isGameActive,
       }),
     }
   )
