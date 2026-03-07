@@ -191,24 +191,32 @@ const CentralScene: React.FC = () => {
           </div>
 
           {/* Mars Disk (Huge arc at bottom) */}
-          <div className="absolute bottom-[-600px] left-1/2 -translate-x-1/2 w-[2000px] h-[1000px] pointer-events-none z-20">
+          <div className="absolute bottom-[-850px] left-1/2 -translate-x-1/2 w-[2400px] h-[1200px] pointer-events-none z-20">
             {/* Atmosphere Limb Glow */}
-            <div className="absolute inset-0 rounded-[50%] shadow-[0_-20px_60px_rgba(255,100,50,0.3)] bg-gradient-to-b from-[#ff6432]/20 to-transparent" />
+            <div className="absolute inset-0 rounded-[50%] shadow-[0_-30px_80px_rgba(255,100,50,0.4)] bg-gradient-to-b from-[#ff6432]/30 to-transparent" />
             
             {/* Main Planet Body */}
             <div className="absolute inset-[2px] rounded-[50%] overflow-hidden bg-[#8b2f1a] shadow-[inset_0_40px_100px_rgba(0,0,0,0.9)]">
-              {/* Surface Texture (Simulated) */}
-              <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')] mix-blend-overlay rotate-12" />
-              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-soft-light" />
+              {/* Surface Texture from provided photo */}
+              <div 
+                className="absolute inset-0 opacity-100 bg-cover bg-center mix-blend-normal"
+                style={{ 
+                  backgroundImage: 'url("./mars_texture.png")',
+                  backgroundPosition: '50% 10%', // Show more of the northern part as requested
+                  transform: 'scale(1.2) translateY(-10%)',
+                }} 
+              />
               
-              {/* Surface Gradients for depth */}
-              <div className="absolute inset-0 bg-gradient-to-b from-[#a53d26]/40 via-transparent to-black/80" />
-              <div className="absolute top-0 left-[20%] w-[40%] h-full bg-black/20 blur-3xl rounded-full" />
-              <div className="absolute top-10 right-[15%] w-[30%] h-[40%] bg-[#5e1a0e]/60 blur-3xl rounded-full" />
+              {/* Lighting Overlays for realism */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/90" />
+              <div className="absolute inset-0 shadow-[inset_0_80px_150px_rgba(255,150,100,0.3),inset_0_-40px_100px_rgba(0,0,0,1)]" />
+              
+              {/* Bright spot from Sun */}
+              <div className="absolute top-0 right-[25%] w-[40%] h-[30%] bg-white/10 blur-[100px] rounded-full" />
             </div>
 
             {/* Thin sharp atmosphere line */}
-            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#ff9664]/50 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#ff9664]/60 to-transparent shadow-[0_0_15px_#ff6432]" />
           </div>
         </>
       )}
