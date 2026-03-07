@@ -54,6 +54,10 @@ export const translations = {
       ice: "Космический лед",
       crystal: "Кристаллы",
       iridium: "Иридий",
+      rust_dust: "Ржавая пыль",
+      red_obsidian: "Красный Обсидиан",
+      mars_ice: "Марсианский Лед",
+      phobos_core: "Ядро Фобоса",
     },
     upgrades: {
       refinery: {
@@ -174,6 +178,10 @@ export const translations = {
       ice: "Space Ice",
       crystal: "Crystals",
       iridium: "Iridium",
+      rust_dust: "Rust Dust",
+      red_obsidian: "Red Obsidian",
+      mars_ice: "Mars Ice",
+      phobos_core: "Phobos Core",
     },
     upgrades: {
       refinery: {

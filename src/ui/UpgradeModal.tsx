@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Database, Lock, MousePointer2, Battery, Search, Maximize } from 'lucide-react';
 import { DroneType, ResourceType } from '../types';
 import { translations } from '../translations';
+import { SECTORS_CONFIG, RESOURCE_CONFIG } from '../config/sectors';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -14,7 +15,11 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   metal: 'bg-slate-500',
   ice: 'bg-blue-400',
   crystal: 'bg-purple-500',
-  iridium: 'bg-amber-500'
+  iridium: 'bg-amber-500',
+  rust_dust: 'bg-orange-800',
+  red_obsidian: 'bg-red-700',
+  mars_ice: 'bg-cyan-600',
+  phobos_core: 'bg-rose-900',
 };
 
 const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
@@ -25,11 +30,12 @@ const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab = 'upgrades' }) => {
   const [activeTab, setActiveTab] = useState<'upgrades' | 'drones' | 'archive' | 'radar'>(initialTab);
-  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, resources, discoveredResources, radar, upgradeRadar } = useGameStore();
+  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, resources, discoveredResources, radar, upgradeRadar, currentSectorId } = useGameStore();
 
   if (!isOpen) return null;
 
   const t = (translations as any)[language];
+  const sector = SECTORS_CONFIG[currentSectorId];
   const hangarLevel = upgrades.hangar?.level || 0;
   const maxDrones = 1 + hangarLevel;
 
@@ -81,42 +87,49 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
         <div className="p-6 h-[400px] overflow-y-auto bg-space-900/20">
           {activeTab === 'upgrades' ? (
             <div className="grid gap-4">
-              {Object.values(upgrades).map((upgrade) => (
-                <div key={upgrade.id} className="bg-space-800 border border-space-700 rounded-xl p-4 flex items-center justify-between group hover:border-neon-blue/50 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-space-700 rounded-lg text-neon-blue group-hover:scale-110 transition-transform">
-                      {upgrade.id === 'refinery' && <Cpu size={24} />}
-                      {upgrade.id === 'cargo_bay' && <Package size={24} />}
-                      {upgrade.id === 'hangar' && <Warehouse size={24} />}
-                      {upgrade.id === 'automation' && <Zap size={24} />}
+              {Object.values(upgrades).map((upgrade) => {
+                let maxLevel = upgrade.maxLevel;
+                if (upgrade.id === 'refinery') maxLevel = sector.maxUpgrades.refinery;
+                if (upgrade.id === 'cargo_bay') maxLevel = sector.maxUpgrades.storage;
+                if (upgrade.id === 'hangar') maxLevel = sector.maxUpgrades.hangar;
+
+                return (
+                  <div key={upgrade.id} className="bg-space-800 border border-space-700 rounded-xl p-4 flex items-center justify-between group hover:border-neon-blue/50 transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-space-700 rounded-lg text-neon-blue group-hover:scale-110 transition-transform">
+                        {upgrade.id === 'refinery' && <Cpu size={24} />}
+                        {upgrade.id === 'cargo_bay' && <Package size={24} />}
+                        {upgrade.id === 'hangar' && <Warehouse size={24} />}
+                        {upgrade.id === 'automation' && <Zap size={24} />}
+                      </div>
+                      <div>
+                        <h3 className="font-orbitron text-sm text-white mb-0.5">
+                          {t.upgrades[upgrade.id as keyof typeof t.upgrades].name} 
+                          <span className="text-neon-blue text-[10px] ml-2">Lv.{upgrade.level}</span>
+                        </h3>
+                        <p className="text-[11px] text-gray-400 max-w-[280px]">
+                          {t.upgrades[upgrade.id as keyof typeof t.upgrades].description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-orbitron text-sm text-white mb-0.5">
-                        {t.upgrades[upgrade.id as keyof typeof t.upgrades].name} 
-                        <span className="text-neon-blue text-[10px] ml-2">Lv.{upgrade.level}</span>
-                      </h3>
-                      <p className="text-[11px] text-gray-400 max-w-[280px]">
-                        {t.upgrades[upgrade.id as keyof typeof t.upgrades].description}
-                      </p>
-                    </div>
+                    <button
+                      onClick={() => purchaseUpgrade(upgrade.id)}
+                      disabled={credits < upgrade.cost || upgrade.level >= maxLevel}
+                      className={`px-4 py-2 rounded-lg font-orbitron text-[10px] uppercase transition-all flex flex-col items-center gap-1 min-w-[100px] cursor-pointer
+                        ${upgrade.level >= maxLevel ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50' :
+                          credits >= upgrade.cost ? 'bg-neon-blue/20 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black shadow-[0_0_10px_rgba(0,242,255,0.2)]' :
+                          'bg-space-700 border border-space-600 text-gray-500 cursor-not-allowed opacity-50'}`}
+                    >
+                      {upgrade.level >= maxLevel ? t.ui.max_level : (
+                        <>
+                          <span>{t.ui.upgrade}</span>
+                          <span className="text-neon-gold">{upgrade.cost.toLocaleString()} CR</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => purchaseUpgrade(upgrade.id)}
-                    disabled={credits < upgrade.cost || upgrade.level >= upgrade.maxLevel}
-                    className={`px-4 py-2 rounded-lg font-orbitron text-[10px] uppercase transition-all flex flex-col items-center gap-1 min-w-[100px] cursor-pointer
-                      ${upgrade.level >= upgrade.maxLevel ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50' :
-                        credits >= upgrade.cost ? 'bg-neon-blue/20 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black shadow-[0_0_10px_rgba(0,242,255,0.2)]' :
-                        'bg-space-700 border border-space-600 text-gray-500 cursor-not-allowed opacity-50'}`}
-                  >
-                    {upgrade.level >= upgrade.maxLevel ? t.ui.max_level : (
-                      <>
-                        <span>{t.ui.upgrade}</span>
-                        <span className="text-neon-gold">{upgrade.cost.toLocaleString()} CR</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : activeTab === 'drones' ? (
             <div className="grid gap-4">
@@ -165,16 +178,22 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             </div>
           ) : activeTab === 'archive' ? (
             <div className="grid gap-4">
-              {Object.values(resources).map((res) => {
-                const isDiscovered = discoveredResources.includes(res.id);
-                const hits = res.id === 'metal' ? 1 : res.id === 'ice' ? 2 : 3;
-                const rarityKey = res.id === 'metal' ? 'common' : res.id === 'ice' ? 'uncommon' : res.id === 'crystal' ? 'rare' : 'legendary';
+              {Object.keys(RESOURCE_CONFIG).map((resId) => {
+                const res = RESOURCE_CONFIG[resId as ResourceId];
+                const isDiscovered = discoveredResources.includes(resId as ResourceType);
+                const hits = res.maxHits;
+                
+                // Determine rarity based on spawnChance
+                let rarityKey: 'common' | 'uncommon' | 'rare' | 'legendary' = 'common';
+                if (res.spawnChance <= 0.05) rarityKey = 'legendary';
+                else if (res.spawnChance <= 0.15) rarityKey = 'rare';
+                else if (res.spawnChance <= 0.40) rarityKey = 'uncommon';
 
                 return (
-                  <div key={res.id} className={`bg-space-800 border rounded-xl p-4 flex items-center gap-4 transition-all
+                  <div key={resId} className={`bg-space-800 border rounded-xl p-4 flex items-center gap-4 transition-all
                     ${isDiscovered ? 'border-space-700' : 'border-space-800 opacity-40 grayscale'}`}>
                     <div className={`p-4 rounded-lg flex items-center justify-center relative
-                      ${isDiscovered ? RESOURCE_COLORS[res.id] : 'bg-space-700'}`}>
+                      ${isDiscovered ? RESOURCE_COLORS[resId as ResourceType] : 'bg-space-700'}`}>
                       <Database size={24} className={isDiscovered ? 'text-white/80' : 'text-gray-600'} />
                       {!isDiscovered && <Lock size={12} className="absolute inset-0 m-auto text-white" />}
                     </div>
@@ -182,11 +201,13 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-orbitron text-sm text-white uppercase tracking-wider">
-                          {isDiscovered ? (t.resources as any)[res.id] : t.ui.locked}
+                          {isDiscovered ? (t.resources[resId] || res.nameRu) : t.ui.locked}
                         </h3>
                         {isDiscovered && (
                           <span className={`text-[8px] px-1.5 py-0.5 rounded border border-white/10 uppercase
-                            ${res.id === 'metal' ? 'text-gray-400' : res.id === 'ice' ? 'text-blue-400' : res.id === 'crystal' ? 'text-purple-400' : 'text-amber-400'}`}>
+                            ${resId === 'metal' || resId === 'rust_dust' ? 'text-gray-400' : 
+                              resId === 'ice' || resId === 'red_obsidian' ? 'text-blue-400' : 
+                              resId === 'crystal' || resId === 'mars_ice' ? 'text-purple-400' : 'text-amber-400'}`}>
                             {(t.ui.rarity_types as any)[rarityKey]}
                           </span>
                         )}
@@ -220,7 +241,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             </div>
             {[
               { id: 'battery', icon: <Battery size={24} />, name: t.radar_upgrades?.battery?.name || 'Battery', desc: t.radar_upgrades?.battery?.desc || 'More pulses per scan', cost: 200 * Math.pow(2, radar.upgrades.battery) },
-              { id: 'deepScan', icon: <Search size={24} />, name: t.radar_upgrades?.deepScan?.name || 'Deep Scan', desc: t.radar_upgrades?.deepScan?.desc || 'Find rarer resources', cost: 1000 * Math.pow(4, radar.upgrades.deepScan), max: 3 },
+              { id: 'deepScan', icon: <Search size={24} />, name: t.radar_upgrades?.deepScan?.name || 'Deep Scan', desc: t.radar_upgrades?.deepScan?.desc || 'Find rarer resources', cost: sector.radarDeepScanBasePrices[radar.upgrades.deepScan], max: 3 },
               { id: 'gridSize', icon: <Maximize size={24} />, name: t.radar_upgrades?.gridSize?.name || 'Beam Width', desc: t.radar_upgrades?.gridSize?.desc || 'Larger scanning area', cost: 1000 * Math.pow(4, radar.upgrades.gridSize), max: 2 },
               { id: 'sonar', icon: <Zap size={24} />, name: t.radar_upgrades?.sonar?.name || 'Sonar', desc: t.radar_upgrades?.sonar?.desc || 'Auto-reveal resources on start', cost: 300 * Math.pow(2.5, radar.upgrades.sonar) },
             ].map((upg) => {

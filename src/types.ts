@@ -1,7 +1,10 @@
 import { Language } from './translations';
+import { SectorId } from './config/sectors';
 export type { Language };
 
-export type ResourceType = "metal" | "ice" | "crystal" | "iridium";
+export type ResourceType = 
+  | "metal" | "ice" | "crystal" | "iridium" // Tier 1
+  | "rust_dust" | "red_obsidian" | "mars_ice" | "phobos_core"; // Tier 2
 export type DroneType = 'basic' | 'scout' | 'heavy';
 
 export interface Resource {
@@ -89,6 +92,7 @@ export interface GameState {
   };
   asteroids: ClickableAsteroid[];
   isGameActive: boolean;
+  currentSectorId: SectorId;
   discoveredResources: ResourceType[];
   radar: RadarState;
 }
