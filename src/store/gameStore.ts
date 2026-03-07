@@ -460,7 +460,10 @@ export const useGameStore = create<GameStore>()(
             energy: state.radar.energy - 1,
             isActive: true,
             sessionEarnedCR: 0,
-            sessionResources: { metal: 0, ice: 0, crystal: 0, iridium: 0 },
+            sessionResources: Object.keys(RESOURCE_CONFIG).reduce((acc, id) => {
+              acc[id as ResourceType] = 0;
+              return acc;
+            }, {} as Record<ResourceType, number>),
             grid,
             clicksRemaining,
           }
@@ -610,7 +613,7 @@ export const useGameStore = create<GameStore>()(
             const resDataList = sectorResources.map(id => {
               const data = RESOURCE_CONFIG[id];
               totalWeight += data.spawnChance;
-              return { id, weight: data.spawnChance, ...data };
+              return { weight: data.spawnChance, ...data };
             });
 
             const rand = Math.random() * totalWeight;

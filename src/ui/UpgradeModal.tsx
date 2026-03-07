@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Database, Lock, MousePointer2, Battery, Search, Maximize } from 'lucide-react';
 import { DroneType, ResourceType } from '../types';
 import { translations } from '../translations';
-import { SECTORS_CONFIG, RESOURCE_CONFIG } from '../config/sectors';
+import { SECTORS_CONFIG, RESOURCE_CONFIG, ResourceId } from '../config/sectors';
 
 interface UpgradeModalProps {
   isOpen: boolean;

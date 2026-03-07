@@ -1,6 +1,6 @@
 import { Language } from './translations';
 import { SectorId } from './config/sectors';
-export type { Language };
+export type { Language, SectorId };
 
 export type ResourceType = 
   | "metal" | "ice" | "crystal" | "iridium" // Tier 1
