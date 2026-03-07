@@ -31,6 +31,16 @@ export const translations = {
       density: "Плотность",
       hits_unit: "удара",
       locked: "Заблокировано",
+      battery_status: "Заряд батареи",
+      session_profit: "Прибыль за сессию",
+      clicks_remaining: "Импульсов осталось",
+      radar_scanning: "Сканирование сектора...",
+      scan_complete: "Сканирование завершено",
+      total_profit: "Всего получено",
+      return_to_base: "Вернуться на базу",
+      radar_energy: "Энергия радара",
+      start_scan: "Начать сканирование",
+      radar: "Радар",
       rarity_types: {
         common: "Обычная",
         uncommon: "Средняя",
@@ -62,6 +72,24 @@ export const translations = {
         description: "Авто-запуск транспорта при 80% заполнении",
       },
     },
+    radar_upgrades: {
+      battery: {
+        name: "Батарея",
+        desc: "Больше импульсов за одно сканирование",
+      },
+      deepScan: {
+        name: "Глубокое сканирование",
+        desc: "Позволяет находить более редкие ресурсы",
+      },
+      gridSize: {
+        name: "Ширина луча",
+        desc: "Увеличивает площадь сканируемого сектора",
+      },
+      sonar: {
+        name: "Сонар",
+        desc: "Автоматически открывает ресурсы на старте",
+      },
+    },
     drones: {
       basic: {
         name: "Базовый дрон",
@@ -80,6 +108,7 @@ export const translations = {
       new_drone: "Куплен новый {name}!",
       upgrade_success: "{name} улучшен до уровня {level}!",
       offline_income: "Пока вас не было, дроны добыли {resources} ресурсов и заработали {credits} CR!",
+      radar_hazard: "ОПАСНОСТЬ! -3 импульса",
     },
     menu: {
       continue: "Продолжить",
@@ -121,6 +150,16 @@ export const translations = {
       density: "Density",
       hits_unit: "hits",
       locked: "Locked",
+      battery_status: "Battery Charge",
+      session_profit: "Session Profit",
+      clicks_remaining: "Pulses Remaining",
+      radar_scanning: "Scanning Sector...",
+      scan_complete: "Scan Complete",
+      total_profit: "Total Received",
+      return_to_base: "Return to Base",
+      radar_energy: "Radar Energy",
+      start_scan: "Start Scan",
+      radar: "Radar",
       rarity_types: {
         common: "Common",
         uncommon: "Uncommon",
@@ -152,6 +191,24 @@ export const translations = {
         description: "Auto-launches transport at 80% storage",
       },
     },
+    radar_upgrades: {
+      battery: {
+        name: "Battery",
+        desc: "More pulses per scan session",
+      },
+      deepScan: {
+        name: "Deep Scan",
+        desc: "Enables discovery of rarer resources",
+      },
+      gridSize: {
+        name: "Beam Width",
+        desc: "Increases the scanning sector area",
+      },
+      sonar: {
+        name: "Sonar",
+        desc: "Auto-reveals resource locations on start",
+      },
+    },
     drones: {
       basic: {
         name: "Basic Drone",
@@ -170,6 +227,7 @@ export const translations = {
       new_drone: "New {name} Purchased!",
       upgrade_success: "{name} Upgraded to Lv.{level}!",
       offline_income: "While you were away, drones mined {resources} resources and earned {credits} CR!",
+      radar_hazard: "HAZARD! -3 Pulses",
     },
     menu: {
       continue: "Continue",

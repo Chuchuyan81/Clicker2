@@ -4,6 +4,7 @@ import { gameEngine } from './engine/GameEngine';
 import CentralScene from './ui/CentralScene';
 import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
+import RadarOverlay from './ui/RadarOverlay';
 import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home } from 'lucide-react';
 import { translations } from './translations';
 
@@ -13,7 +14,11 @@ const App: React.FC = () => {
     return () => gameEngine.stop();
   }, []);
 
-  const { credits, drones, storage, transport, startTransport, activateMiningBurst, boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu } = useGameStore();
+  const { 
+    credits, drones, storage, transport, startTransport, activateMiningBurst, 
+    boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu,
+    radar, startRadarScan
+  } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive'>('upgrades');
@@ -21,6 +26,9 @@ const App: React.FC = () => {
   const t = (translations as any)[language];
   const boostActive = boostEndTime > Date.now();
   const boostRemainingSec = Math.max(0, Math.ceil((boostEndTime - Date.now()) / 1000));
+
+  const radarTimerSec = Math.max(0, Math.ceil((radar.rechargeRateMs - radar.energyTimerMs) / 1000));
+  const radarTimerFormatted = `${Math.floor(radarTimerSec / 60)}:${(radarTimerSec % 60).toString().padStart(2, '0')}`;
 
   useEffect(() => {
     if (!boostActive) return;
@@ -161,6 +169,25 @@ const App: React.FC = () => {
         </button>
 
         <button 
+          onClick={() => radar.energy > 0 && startRadarScan()} 
+          disabled={radar.energy <= 0 || radar.isActive}
+          className={`group relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20 cursor-pointer
+            ${radar.energy > 0 ? 'hover:bg-space-700 bg-space-800 active:scale-95' : 'bg-space-800 opacity-50 cursor-not-allowed'}`}
+        >
+          <div className="relative mb-1">
+            <Database size={18} className="text-neon-blue" />
+            <div className="absolute -top-1 -right-1 flex gap-0.5">
+              {Array.from({ length: radar.maxEnergy }).map((_, i) => (
+                <div key={i} className={`w-1 h-1 rounded-full ${i < radar.energy ? 'bg-neon-blue' : 'bg-gray-600'}`} />
+              ))}
+            </div>
+          </div>
+          <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">
+            {radar.energy < radar.maxEnergy ? radarTimerFormatted : t.ui.start_scan}
+          </span>
+        </button>
+
+        <button 
           onClick={() => unlocked && openUpgradeModal('upgrades')}
           className={`group/lock relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20
             ${unlocked ? 'bg-space-800 hover:bg-space-700 active:scale-95 cursor-pointer' : 'bg-space-800 opacity-60 cursor-not-allowed'}`}
@@ -188,6 +215,7 @@ const App: React.FC = () => {
         onClose={() => setModalOpen(false)} 
         initialTab={modalTab} 
       />
+      <RadarOverlay />
     </div>
   );
 };

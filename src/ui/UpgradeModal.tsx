@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Database, Lock, MousePointer2 } from 'lucide-react';
+import { X, Cpu, ShoppingCart, Zap, Timer, Package, Warehouse, Database, Lock, MousePointer2, Battery, Search, Maximize } from 'lucide-react';
 import { DroneType, ResourceType } from '../types';
 import { translations } from '../translations';
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'upgrades' | 'drones' | 'archive';
+  initialTab?: 'upgrades' | 'drones' | 'archive' | 'radar';
 }
 
 const RESOURCE_COLORS: Record<ResourceType, string> = {
@@ -24,8 +24,8 @@ const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
 ];
 
 const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab = 'upgrades' }) => {
-  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones' | 'archive'>(initialTab);
-  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, resources, discoveredResources } = useGameStore();
+  const [activeTab, setActiveTab] = useState<'upgrades' | 'drones' | 'archive' | 'radar'>(initialTab);
+  const { credits, upgrades, purchaseUpgrade, buyDrone, drones, language, resources, discoveredResources, radar, upgradeRadar } = useGameStore();
 
   if (!isOpen) return null;
 
@@ -68,6 +68,12 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'archive' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.archive}
+          </button>
+          <button
+            onClick={() => setActiveTab('radar')}
+            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'radar' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+          >
+            {t.ui.radar || 'Radar'}
           </button>
         </div>
 
@@ -201,6 +207,52 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                         <div className="h-3 w-24 bg-space-700 rounded animate-pulse" />
                       )}
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : activeTab === 'radar' ? (
+            <div className="grid gap-4">
+              {[
+                { id: 'battery', icon: <Battery size={24} />, name: t.radar_upgrades?.battery?.name || 'Battery', desc: t.radar_upgrades?.battery?.desc || 'More pulses per scan', cost: 200 * Math.pow(2, radar.upgrades.battery) },
+                { id: 'deepScan', icon: <Search size={24} />, name: t.radar_upgrades?.deepScan?.name || 'Deep Scan', desc: t.radar_upgrades?.deepScan?.desc || 'Find rarer resources', cost: 500 * Math.pow(3, radar.upgrades.deepScan), max: 3 },
+                { id: 'gridSize', icon: <Maximize size={24} />, name: t.radar_upgrades?.gridSize?.name || 'Beam Width', desc: t.radar_upgrades?.gridSize?.desc || 'Larger scanning area', cost: 1000 * Math.pow(4, radar.upgrades.gridSize), max: 2 },
+                { id: 'sonar', icon: <Zap size={24} />, name: t.radar_upgrades?.sonar?.name || 'Sonar', desc: t.radar_upgrades?.sonar?.desc || 'Auto-reveal resources', cost: 300 * Math.pow(2.5, radar.upgrades.sonar) },
+              ].map((upg) => {
+                const level = radar.upgrades[upg.id as keyof typeof radar.upgrades];
+                const isMax = upg.max !== undefined && level >= upg.max;
+
+                return (
+                  <div key={upg.id} className="bg-space-800 border border-space-700 rounded-xl p-4 flex items-center justify-between group hover:border-neon-blue/50 transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-space-700 rounded-lg text-neon-blue group-hover:scale-110 transition-transform">
+                        {upg.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-orbitron text-sm text-white mb-0.5">
+                          {upg.name}
+                          <span className="text-neon-blue text-[10px] ml-2">Lv.{level}</span>
+                        </h3>
+                        <p className="text-[11px] text-gray-400 max-w-[280px]">
+                          {upg.desc}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => upgradeRadar(upg.id as any)}
+                      disabled={credits < upg.cost || isMax}
+                      className={`px-4 py-2 rounded-lg font-orbitron text-[10px] uppercase transition-all flex flex-col items-center gap-1 min-w-[100px] cursor-pointer
+                        ${isMax ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50' :
+                          credits >= upg.cost ? 'bg-neon-blue/20 border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black shadow-[0_0_10px_rgba(0,242,255,0.2)]' :
+                          'bg-space-700 border border-space-600 text-gray-500 cursor-not-allowed opacity-50'}`}
+                    >
+                      {isMax ? t.ui.max_level : (
+                        <>
+                          <span>{t.ui.upgrade}</span>
+                          <span className="text-neon-gold">{Math.floor(upg.cost).toLocaleString()} CR</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 );
               })}

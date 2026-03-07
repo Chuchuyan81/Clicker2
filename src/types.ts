@@ -90,6 +90,7 @@ export interface GameState {
   asteroids: ClickableAsteroid[];
   isGameActive: boolean;
   discoveredResources: ResourceType[];
+  radar: RadarState;
 }
 
 export interface ClickableAsteroid {
@@ -102,4 +103,35 @@ export interface ClickableAsteroid {
   hits: number;
   maxHits: number;
   resourceType: ResourceType;
+}
+
+export type RadarCellType = 'empty' | 'resource' | 'hazard';
+
+export interface RadarCell {
+  id: string; // Format: "x-y"
+  x: number;
+  y: number;
+  type: RadarCellType;
+  resourceDrop?: ResourceType;
+  revealed: boolean;
+  adjacentCount: number; // Count of resources+hazards in 8 neighbors
+}
+
+export interface RadarUpgrades {
+  battery: number;   // Level (affects clicksRemaining)
+  deepScan: number;  // Level (unlocks new resources)
+  gridSize: number;  // Level (0: 5x5, 1: 6x6, 2: 8x8)
+  sonar: number;     // Level (auto-reveal count)
+}
+
+export interface RadarState {
+  energy: number;
+  maxEnergy: number;
+  energyTimerMs: number;
+  rechargeRateMs: number;
+  upgrades: RadarUpgrades;
+  isActive: boolean;
+  grid: RadarCell[];
+  clicksRemaining: number;
+  sessionEarnedCR: number;
 }

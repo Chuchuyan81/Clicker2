@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade } from '../types';
+import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades } from '../types';
 import { translations, Language } from '../translations';
+import { generateRadarGrid, revealEmptyCells } from '../utils/radarUtils';
 
 interface GameStore extends GameState {
   addCredits: (amount: number) => void;
@@ -20,6 +21,10 @@ interface GameStore extends GameState {
   startGame: () => void;
   exitToMenu: () => void;
   resetGame: () => void;
+  startRadarScan: () => void;
+  clickRadarCell: (id: string) => void;
+  closeRadar: () => void;
+  upgradeRadar: (id: keyof RadarUpgrades) => boolean;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string }> = {
@@ -101,6 +106,23 @@ const INITIAL_RESOURCES: Record<ResourceType, Resource> = {
 const BOOST_DURATION_MS = 10_000;
 const BOOST_MINING_MULTIPLIER = 1.5;
 
+const INITIAL_RADAR_STATE = {
+  energy: 3,
+  maxEnergy: 3,
+  energyTimerMs: 0,
+  rechargeRateMs: 300_000, // 5 minutes
+  upgrades: {
+    battery: 0,
+    deepScan: 0,
+    gridSize: 0,
+    sonar: 0,
+  },
+  isActive: false,
+  grid: [],
+  clicksRemaining: 0,
+  sessionEarnedCR: 0,
+};
+
 const INITIAL_STATE_DATA = {
   credits: 0,
   lastSeen: Date.now(),
@@ -156,6 +178,7 @@ const INITIAL_STATE_DATA = {
   },
   isGameActive: false,
   discoveredResources: ['metal' as ResourceType],
+  radar: INITIAL_RADAR_STATE,
 };
 
 export const useGameStore = create<GameStore>()(
@@ -308,8 +331,18 @@ export const useGameStore = create<GameStore>()(
       },
 
       applyOfflineProgress: (seconds: number) => {
-        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language } = get();
+        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar } = get();
         const t = (translations as any)[language];
+        
+        // Calculate offline radar energy recharge
+        let newEnergy = radar.energy;
+        let newEnergyTimer = radar.energyTimerMs + (seconds * 1000);
+        
+        while (newEnergy < radar.maxEnergy && newEnergyTimer >= radar.rechargeRateMs) {
+          newEnergy += 1;
+          newEnergyTimer -= radar.rechargeRateMs;
+        }
+        if (newEnergy >= radar.maxEnergy) newEnergyTimer = 0;
         
         // Calculate mined resources per type
         const minedByType: Partial<Record<ResourceType, number>> = {};
@@ -353,6 +386,11 @@ export const useGameStore = create<GameStore>()(
             storage: {
               ...state.storage,
               current: newStorageCurrent
+            },
+            radar: {
+              ...state.radar,
+              energy: newEnergy,
+              energyTimerMs: newEnergyTimer
             },
             lastSeen: Date.now()
           }));
@@ -416,6 +454,118 @@ export const useGameStore = create<GameStore>()(
 
       resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
 
+      startRadarScan: () => {
+        const { radar } = get();
+        if (radar.energy <= 0 || radar.isActive) return;
+        
+        const grid = generateRadarGrid(radar.upgrades);
+        const clicksRemaining = 10 + (radar.upgrades.battery * 2);
+
+        set((state) => ({
+          radar: {
+            ...state.radar,
+            energy: state.radar.energy - 1,
+            isActive: true,
+            sessionEarnedCR: 0,
+            grid,
+            clicksRemaining,
+          }
+        }));
+      },
+
+      clickRadarCell: (id) => {
+        const { radar, storage, resources, multipliers, addResourceToStorage, addCredits, discoveredResources } = get();
+        if (radar.clicksRemaining <= 0 || !radar.isActive) return;
+
+        const cell = radar.grid.find(c => c.id === id);
+        if (!cell || cell.revealed) return;
+
+        let newGrid = [...radar.grid];
+        let newClicksRemaining = radar.clicksRemaining - 1;
+        let newSessionEarnedCR = radar.sessionEarnedCR;
+        let newDiscoveredResources = [...discoveredResources];
+
+        const targetCell = newGrid.find(c => c.id === id)!;
+        targetCell.revealed = true;
+
+        if (targetCell.type === 'hazard') {
+          newClicksRemaining = Math.max(0, newClicksRemaining - 3);
+          // Add info notification about penalty
+          const t = (translations as any)[get().language];
+          get().addNotification('info', t.notifications?.radar_hazard || 'HAZARD! -3 Pulses');
+        } else if (targetCell.type === 'resource' && targetCell.resourceDrop) {
+          const resType = targetCell.resourceDrop;
+          
+          // Discovery logic
+          if (!newDiscoveredResources.includes(resType)) {
+            newDiscoveredResources.push(resType);
+          }
+
+          // Storage check
+          const currentTotal = Object.values(storage.current).reduce((a, b) => a + b, 0);
+          if (currentTotal < storage.capacity) {
+            addResourceToStorage(resType, 1);
+          } else {
+            // Auto-sell overflow
+            const price = resources[resType].basePrice * multipliers.price;
+            addCredits(price);
+            newSessionEarnedCR += price;
+            // Notification about overflow
+            get().addNotification('info', `OVERFLOW: +${Math.floor(price)} CR`);
+          }
+        } else if (targetCell.type === 'empty' && targetCell.adjacentCount === 0) {
+          const size = Math.sqrt(radar.grid.length);
+          newGrid = revealEmptyCells(newGrid, targetCell, size);
+        }
+
+        set((state) => ({
+          discoveredResources: newDiscoveredResources,
+          radar: {
+            ...state.radar,
+            grid: newGrid,
+            clicksRemaining: newClicksRemaining,
+            sessionEarnedCR: newSessionEarnedCR,
+          }
+        }));
+      },
+
+      closeRadar: () => set((state) => ({
+        radar: { ...state.radar, isActive: false, grid: [] }
+      })),
+
+      upgradeRadar: (id) => {
+        const { credits, radar } = get();
+        const level = radar.upgrades[id];
+        
+        let cost = 0;
+        let maxLevel = 99;
+        if (id === 'battery') cost = 200 * Math.pow(2, level);
+        if (id === 'deepScan') { cost = 500 * Math.pow(3, level); maxLevel = 3; }
+        if (id === 'gridSize') { cost = 1000 * Math.pow(4, level); maxLevel = 2; }
+        if (id === 'sonar') cost = 300 * Math.pow(2.5, level);
+
+        if (credits >= cost && level < maxLevel) {
+          set((state) => ({
+            credits: state.credits - cost,
+            radar: {
+              ...state.radar,
+              upgrades: {
+                ...state.radar.upgrades,
+                [id]: level + 1
+              }
+            }
+          }));
+          
+          const t = (translations as any)[get().language];
+          const upgName = t.radar_upgrades?.[id]?.name || id;
+          get().addNotification('info', (t.notifications.upgrade_success as string)
+            .replace('{name}', upgName)
+            .replace('{level}', (level + 1).toString()));
+          return true;
+        }
+        return false;
+      },
+
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
@@ -459,6 +609,18 @@ export const useGameStore = create<GameStore>()(
           const boostActive = state.boostEndTime > now;
           const miningMultiplier = boostActive ? state.boostMiningMultiplier : 1;
           const resetBoost = !boostActive && state.boostMiningMultiplier > 1;
+
+          // --- Radar Energy Recharge ---
+          let newRadar = { ...state.radar };
+          if (newRadar.energy < newRadar.maxEnergy) {
+            newRadar.energyTimerMs += deltaTime;
+            if (newRadar.energyTimerMs >= newRadar.rechargeRateMs) {
+              newRadar.energy += 1;
+              newRadar.energyTimerMs = 0;
+            }
+          } else {
+            newRadar.energyTimerMs = 0;
+          }
 
           const newDrones = state.drones.map((drone) => {
             let { progress, state: droneState, timer, angle, curveOffset, distance } = drone;
@@ -514,6 +676,7 @@ export const useGameStore = create<GameStore>()(
           return {
             drones: newDrones,
             asteroids: newAsteroids,
+            radar: newRadar,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };
@@ -616,6 +779,7 @@ export const useGameStore = create<GameStore>()(
         lastSeen: state.lastSeen,
         isGameActive: state.isGameActive,
         discoveredResources: state.discoveredResources,
+        radar: state.radar,
       }),
     }
   )
