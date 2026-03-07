@@ -46,7 +46,7 @@ const Starfield: React.FC = () => {
   }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none bg-space-950">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
       {/* Туманность (градиентное свечение) */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,242,255,0.05)_0%,transparent_70%)]" />
       

@@ -171,7 +171,31 @@ const CentralScene: React.FC = () => {
     >
       {/* Mars Atmosphere Glow Overlay */}
       {currentSectorId === 'mars_orbit' && (
-        <div className="absolute inset-0 bg-red-900/10 pointer-events-none z-0" />
+        <>
+          <div className="absolute inset-0 bg-red-900/10 pointer-events-none z-0" />
+          <div className="absolute inset-0 pointer-events-none z-[5] overflow-hidden opacity-30">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 animate-mars-dust" />
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 animate-mars-dust" style={{ animationDelay: '-10s', animationDirection: 'reverse' }} />
+          </div>
+        </>
+      )}
+
+      {/* Mars Planet Disk (Fixed in corner) */}
+      {currentSectorId === 'mars_orbit' && !isWarping && (
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 pointer-events-none z-0">
+          {/* Main planet body */}
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-[#8b2f1a] via-[#5e1a0e] to-[#2a0a05] shadow-[inset_-20px_-20px_50px_rgba(0,0,0,0.8),0_0_60px_rgba(139,47,26,0.4)] relative overflow-hidden">
+            {/* Texture/Crater details */}
+            <div className="absolute top-1/4 left-1/4 w-16 h-16 bg-black/20 rounded-full blur-xl" />
+            <div className="absolute top-1/2 left-1/3 w-32 h-24 bg-black/10 rounded-full blur-2xl rotate-45" />
+            <div className="absolute bottom-1/4 right-1/2 w-20 h-20 bg-[#a53d26]/30 rounded-full blur-lg" />
+            
+            {/* Atmosphere limb glow */}
+            <div className="absolute inset-0 rounded-full shadow-[inset_0_0_40px_rgba(255,100,50,0.2)]" />
+          </div>
+          {/* Outer atmosphere glow */}
+          <div className="absolute inset-0 rounded-full bg-red-500/5 blur-3xl scale-110" />
+        </div>
       )}
       
       <div 

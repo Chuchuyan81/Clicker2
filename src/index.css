@@ -83,3 +83,14 @@
   animation: engine-pulse 0.1s ease-in-out infinite;
   transform-origin: top center;
 }
+
+@keyframes mars-dust {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.1; }
+  90% { opacity: 0.1; }
+  100% { transform: translate(-100px, -50px); opacity: 0; }
+}
+
+.animate-mars-dust {
+  animation: mars-dust 20s linear infinite;
+}
