@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades } from '../types';
 import { translations, Language } from '../translations';
 import { generateRadarGrid, revealEmptyCells } from '../utils/radarUtils';
+import { SECTORS_CONFIG, RESOURCE_CONFIG, SectorId } from '../config/sectors';
 
 interface GameStore extends GameState {
   addCredits: (amount: number) => void;
@@ -76,32 +77,15 @@ const INITIAL_UPGRADES: Record<string, Upgrade> = {
   },
 };
 
-const INITIAL_RESOURCES: Record<ResourceType, Resource> = {
-  metal: {
-    id: 'metal',
-    name: 'Металл',
-    basePrice: 1,
-    rarity: 1,
-  },
-  ice: {
-    id: 'ice',
-    name: 'Космический лед',
-    basePrice: 5,
-    rarity: 0.5,
-  },
-  crystal: {
-    id: 'crystal',
-    name: 'Кристаллы',
-    basePrice: 25,
-    rarity: 0.2,
-  },
-  iridium: {
-    id: 'iridium',
-    name: 'Иридий',
-    basePrice: 100,
-    rarity: 0.05,
-  },
-};
+const INITIAL_RESOURCES: Record<ResourceType, Resource> = Object.entries(RESOURCE_CONFIG).reduce((acc, [id, data]) => {
+  acc[id as ResourceType] = {
+    id: id as ResourceType,
+    name: data.nameRu,
+    basePrice: data.basePrice,
+    rarity: data.spawnChance,
+  };
+  return acc;
+}, {} as Record<ResourceType, Resource>);
 
 const BOOST_DURATION_MS = 10_000;
 const BOOST_MINING_MULTIPLIER = 1.5;
@@ -121,12 +105,10 @@ const INITIAL_RADAR_STATE = {
   grid: [],
   clicksRemaining: 0,
   sessionEarnedCR: 0,
-  sessionResources: {
-    metal: 0,
-    ice: 0,
-    crystal: 0,
-    iridium: 0,
-  },
+  sessionResources: Object.keys(RESOURCE_CONFIG).reduce((acc, id) => {
+    acc[id as ResourceType] = 0;
+    return acc;
+  }, {} as Record<ResourceType, number>),
 };
 
 const INITIAL_STATE_DATA = {
@@ -159,12 +141,10 @@ const INITIAL_STATE_DATA = {
   ],
   storage: {
     capacity: 100,
-    current: {
-      metal: 0,
-      ice: 0,
-      crystal: 0,
-      iridium: 0,
-    },
+    current: Object.keys(RESOURCE_CONFIG).reduce((acc, id) => {
+      acc[id as ResourceType] = 0;
+      return acc;
+    }, {} as Record<ResourceType, number>),
   },
   transport: {
     state: 'idle' as const,
@@ -183,6 +163,7 @@ const INITIAL_STATE_DATA = {
     speed: 1,
   },
   isGameActive: false,
+  currentSectorId: 'asteroid_belt' as SectorId,
   discoveredResources: ['metal' as ResourceType],
   radar: INITIAL_RADAR_STATE,
 };
@@ -248,10 +229,16 @@ export const useGameStore = create<GameStore>()(
       },
 
       purchaseUpgrade: (id) => {
-        const { credits, upgrades } = get();
+        const { credits, upgrades, currentSectorId } = get();
         const upgrade = upgrades[id];
+        const sector = SECTORS_CONFIG[currentSectorId];
+        
+        let maxLevel = upgrade.maxLevel;
+        if (id === 'refinery') maxLevel = sector.maxUpgrades.refinery;
+        if (id === 'cargo_bay') maxLevel = sector.maxUpgrades.storage;
+        if (id === 'hangar') maxLevel = sector.maxUpgrades.hangar;
 
-        if (credits >= upgrade.cost && upgrade.level < upgrade.maxLevel) {
+        if (credits >= upgrade.cost && upgrade.level < maxLevel) {
           const newLevel = upgrade.level + 1;
           const newCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, newLevel));
           
@@ -461,10 +448,10 @@ export const useGameStore = create<GameStore>()(
       resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
 
       startRadarScan: () => {
-        const { radar } = get();
+        const { radar, currentSectorId } = get();
         if (radar.energy <= 0 || radar.isActive) return;
         
-        const grid = generateRadarGrid(radar.upgrades);
+        const grid = generateRadarGrid(radar.upgrades, currentSectorId);
         const clicksRemaining = 10 + (radar.upgrades.battery * 2);
 
         set((state) => ({
@@ -473,7 +460,10 @@ export const useGameStore = create<GameStore>()(
             energy: state.radar.energy - 1,
             isActive: true,
             sessionEarnedCR: 0,
-            sessionResources: { metal: 0, ice: 0, crystal: 0, iridium: 0 },
+            sessionResources: Object.keys(RESOURCE_CONFIG).reduce((acc, id) => {
+              acc[id as ResourceType] = 0;
+              return acc;
+            }, {} as Record<ResourceType, number>),
             grid,
             clicksRemaining,
           }
@@ -560,13 +550,17 @@ export const useGameStore = create<GameStore>()(
       })),
 
       upgradeRadar: (id) => {
-        const { credits, radar } = get();
+        const { credits, radar, currentSectorId } = get();
         const level = radar.upgrades[id];
+        const sector = SECTORS_CONFIG[currentSectorId];
         
         let cost = 0;
         let maxLevel = 99;
         if (id === 'battery') cost = 200 * Math.pow(2, level);
-        if (id === 'deepScan') { cost = 1000 * Math.pow(4, level); maxLevel = 3; }
+        if (id === 'deepScan') { 
+          cost = sector.radarDeepScanBasePrices[level]; 
+          maxLevel = 3; 
+        }
         if (id === 'gridSize') { cost = 1000 * Math.pow(4, level); maxLevel = 2; }
         if (id === 'sonar') cost = 300 * Math.pow(2.5, level);
 
@@ -611,14 +605,30 @@ export const useGameStore = create<GameStore>()(
             else if (side === 2) { x = Math.random() * 100; y = 105; angle = -Math.PI / 4 - Math.random() * Math.PI / 2; }
             else { x = -5; y = Math.random() * 100; angle = -Math.PI / 4 + Math.random() * Math.PI / 2; }
 
-            const rand = Math.random();
-            let resType: ResourceType = 'metal';
-            let maxHits = 1;
+            const { currentSectorId } = get();
+            const sectorResources = SECTORS_CONFIG[currentSectorId].resources;
             
-            if (rand < 0.05) { resType = 'iridium'; maxHits = 3; }
-            else if (rand < 0.15) { resType = 'crystal'; maxHits = 3; }
-            else if (rand < 0.40) { resType = 'ice'; maxHits = 2; }
-            else { resType = 'metal'; maxHits = 1; }
+            // Расчет общего веса для вероятностей
+            let totalWeight = 0;
+            const resDataList = sectorResources.map(id => {
+              const data = RESOURCE_CONFIG[id];
+              totalWeight += data.spawnChance;
+              return { weight: data.spawnChance, ...data };
+            });
+
+            const rand = Math.random() * totalWeight;
+            let resType: ResourceType = sectorResources[0];
+            let maxHits = 1;
+            let currentWeight = 0;
+
+            for (const res of resDataList) {
+              currentWeight += res.weight;
+              if (rand <= currentWeight) {
+                resType = res.id as ResourceType;
+                maxHits = res.maxHits;
+                break;
+              }
+            }
 
             newAsteroids.push({
               id: `ast-${Math.random().toString(36).substr(2, 9)}`,
@@ -807,6 +817,7 @@ export const useGameStore = create<GameStore>()(
         multipliers: state.multipliers,
         lastSeen: state.lastSeen,
         isGameActive: state.isGameActive,
+        currentSectorId: state.currentSectorId,
         discoveredResources: state.discoveredResources,
         radar: state.radar,
       }),

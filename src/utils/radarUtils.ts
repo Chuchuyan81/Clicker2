@@ -1,9 +1,12 @@
-import { RadarCell, RadarUpgrades, ResourceType } from '../types';
+import { RadarCell, RadarUpgrades, ResourceType, SectorId } from '../types';
+import { SECTORS_CONFIG } from '../config/sectors';
 
-export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
+export const generateRadarGrid = (upgrades: RadarUpgrades, sectorId: SectorId): RadarCell[] => {
   const size = upgrades.gridSize === 0 ? 5 : upgrades.gridSize === 1 ? 6 : 8;
   const totalCells = size * size;
   const grid: RadarCell[] = [];
+
+  const sectorResources = SECTORS_CONFIG[sectorId].resources;
 
   // Initialize empty grid
   for (let y = 0; y < size; y++) {
@@ -40,7 +43,7 @@ export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
     const cell = getRandomCell(c => c.type === 'empty');
     if (cell) {
       cell.type = 'resource';
-      cell.resourceDrop = getResourceByDeepScan(upgrades.deepScan);
+      cell.resourceDrop = getResourceByDeepScan(upgrades.deepScan, sectorResources);
     }
   }
 
@@ -75,23 +78,25 @@ export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
   return grid;
 };
 
-const getResourceByDeepScan = (level: number): ResourceType => {
+const getResourceByDeepScan = (level: number, sectorResources: ResourceType[]): ResourceType => {
   const rand = Math.random();
-  if (level === 0) return 'metal';
+  const [res1, res2, res3, res4] = sectorResources;
+
+  if (level === 0) return res1;
   if (level === 1) {
-    if (rand < 0.3) return 'ice';
-    return 'metal';
+    if (rand < 0.3) return res2 || res1;
+    return res1;
   }
   if (level === 2) {
-    if (rand < 0.15) return 'crystal';
-    if (rand < 0.4) return 'ice';
-    return 'metal';
+    if (rand < 0.15) return res3 || res2 || res1;
+    if (rand < 0.4) return res2 || res1;
+    return res1;
   }
   // lvl 3+
-  if (rand < 0.1) return 'iridium';
-  if (rand < 0.25) return 'crystal';
-  if (rand < 0.5) return 'ice';
-  return 'metal';
+  if (rand < 0.1) return res4 || res3 || res2 || res1;
+  if (rand < 0.25) return res3 || res2 || res1;
+  if (rand < 0.5) return res2 || res1;
+  return res1;
 };
 
 export const revealEmptyCells = (grid: RadarCell[], startCell: RadarCell, size: number): RadarCell[] => {

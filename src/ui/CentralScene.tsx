@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { Rocket, Zap, Search, MousePointer2 } from 'lucide-react';
 import { ResourceType } from '../types';
 import { translations } from '../translations';
+import { RESOURCE_CONFIG } from '../config/sectors';
 import Starfield from './Starfield';
 
 const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w-28', h: 'h-28', inner: 'w-20 h-20' }, 3: { w: 'w-32', h: 'h-32', inner: 'w-24 h-24' } } as const;
@@ -43,6 +44,10 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
   ice: { base: 'bg-blue-950', border: 'border-blue-800', glow: 'bg-white/10' },
   crystal: { base: 'bg-purple-950', border: 'border-purple-800', glow: 'bg-fuchsia-500/10' },
   iridium: { base: 'bg-amber-950', border: 'border-amber-800', glow: 'bg-yellow-500/10' },
+  rust_dust: { base: 'bg-orange-950', border: 'border-orange-900', glow: 'bg-orange-500/10' },
+  red_obsidian: { base: 'bg-red-950', border: 'border-red-900', glow: 'bg-red-500/10' },
+  mars_ice: { base: 'bg-cyan-950', border: 'border-cyan-900', glow: 'bg-cyan-500/10' },
+  phobos_core: { base: 'bg-rose-950', border: 'border-rose-900', glow: 'bg-rose-500/10' },
 };
 
 const CentralScene: React.FC = () => {
@@ -423,7 +428,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <Zap size={12} className="text-neon-gold" />
                       <span className="text-sm font-mono text-neon-gold">
-                        {discoveryPopup === 'ice' ? '5' : discoveryPopup === 'crystal' ? '25' : '100'} CR
+                        {RESOURCE_CONFIG[discoveryPopup].basePrice} CR
                       </span>
                     </div>
                   </div>
@@ -432,7 +437,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <MousePointer2 size={12} className="text-gray-300" />
                       <span className="text-sm font-mono text-gray-300">
-                        {discoveryPopup === 'ice' ? '2' : '3'} {t_ui.hits_unit}
+                        {RESOURCE_CONFIG[discoveryPopup].maxHits} {t_ui.hits_unit}
                       </span>
                     </div>
                   </div>

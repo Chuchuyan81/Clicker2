@@ -10,6 +10,10 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   ice: 'text-blue-400',
   crystal: 'text-purple-400',
   iridium: 'text-amber-400',
+  rust_dust: 'text-orange-500',
+  red_obsidian: 'text-red-500',
+  mars_ice: 'text-cyan-400',
+  phobos_core: 'text-rose-600',
 };
 
 const RESOURCE_BG: Record<ResourceType, string> = {
@@ -17,6 +21,10 @@ const RESOURCE_BG: Record<ResourceType, string> = {
   ice: 'bg-blue-500',
   crystal: 'bg-purple-500',
   iridium: 'bg-amber-500',
+  rust_dust: 'bg-orange-600',
+  red_obsidian: 'bg-red-600',
+  mars_ice: 'bg-cyan-500',
+  phobos_core: 'bg-rose-700',
 };
 
 const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
