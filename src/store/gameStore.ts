@@ -722,10 +722,13 @@ export const useGameStore = create<GameStore>()(
         
         if (!transport.isActive) {
           const totalCurrent = Object.values(storage.current).reduce((a, b) => a + b, 0);
-          const threshold = automationEnabled ? storage.capacity * 0.8 : storage.capacity;
           
-          if (totalCurrent >= threshold && totalCurrent > 0) {
-            startTransport();
+          // Only auto-start if automation is enabled
+          if (automationEnabled) {
+            const threshold = storage.capacity * 0.8;
+            if (totalCurrent >= threshold && totalCurrent > 0) {
+              startTransport();
+            }
           }
           return;
         }

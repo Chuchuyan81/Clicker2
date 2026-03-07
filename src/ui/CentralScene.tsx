@@ -224,8 +224,41 @@ const CentralScene: React.FC = () => {
         <BaseHQ level={baseLevel} boostActive={boostActive} />
 
         {/* Drones — trajectory, rotation, color by state */}
-        {drones.map((drone) => {
-          if (drone.state === 'offscreen_wait' || drone.state === 'unloading_wait') return null;
+        {drones.map((drone, index) => {
+          if (drone.state === 'offscreen_wait') return null;
+
+          // Special state: ready to unload but warehouse is full
+          if (drone.state === 'unloading_wait' && drone.timer <= 0) {
+            const time = performance.now() / 1000;
+            const orbitRadius = 60 + (index * 15);
+            const orbitSpeed = 0.5 + (index * 0.1);
+            const currentAngle = time * orbitSpeed + (index * Math.PI * 0.5);
+            
+            const px = Math.cos(currentAngle) * orbitRadius;
+            const py = Math.sin(currentAngle) * orbitRadius;
+            const rotation = (currentAngle * 180 / Math.PI) + 90;
+
+            const sizeCls = drone.type === 'scout' ? 'scale-75' : drone.type === 'heavy' ? 'scale-125' : '';
+
+            return (
+              <div 
+                key={drone.id}
+                className={`absolute transition-all duration-75 z-20 ${sizeCls}`}
+                style={{ 
+                  transform: `translate(${px}px, ${py}px) rotate(${rotation}deg)`,
+                }}
+              >
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-6 translate-y-full blur-[1px] opacity-60">
+                   <div className="w-full h-full bg-gradient-to-b from-neon-blue to-transparent animate-engine rounded-full" />
+                </div>
+                <div className={`relative p-1 rounded bg-space-800 border border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]`}>
+                  <div className={`w-2 h-2 rounded-full bg-yellow-400 animate-pulse`} />
+                </div>
+              </div>
+            );
+          }
+
+          if (drone.state === 'unloading_wait') return null;
 
           const start = { x: 0, y: 0 };
           const end = { 
