@@ -134,4 +134,5 @@ export interface RadarState {
   grid: RadarCell[];
   clicksRemaining: number;
   sessionEarnedCR: number;
+  sessionResources: Record<ResourceType, number>;
 }

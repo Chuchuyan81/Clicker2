@@ -12,6 +12,13 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   iridium: 'text-amber-400',
 };
 
+const RESOURCE_BG: Record<ResourceType, string> = {
+  metal: 'bg-slate-500',
+  ice: 'bg-blue-500',
+  crystal: 'bg-purple-500',
+  iridium: 'bg-amber-500',
+};
+
 const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
   const { clickRadarCell } = useGameStore();
 
@@ -55,7 +62,16 @@ const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
               <Radiation size={20} className="text-red-500 animate-pulse" />
             )}
             {cell.type === 'resource' && cell.resourceDrop && (
-              <Database size={20} className={RESOURCE_COLORS[cell.resourceDrop]} />
+              <>
+                <Database size={20} className={RESOURCE_COLORS[cell.resourceDrop]} />
+                <motion.div
+                  initial={{ y: 0, opacity: 1 }}
+                  animate={{ y: -40, opacity: 0 }}
+                  className="absolute pointer-events-none font-orbitron text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded"
+                >
+                  +1 {(translations as any)[useGameStore.getState().language].resources[cell.resourceDrop]}
+                </motion.div>
+              </>
             )}
             
             {/* Scanline effect for resources */}
@@ -78,6 +94,19 @@ const RadarOverlay: React.FC = () => {
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
   const storageFillRatio = currentStorage / storage.capacity;
   const gridSize = Math.sqrt(radar.grid.length);
+
+  const [lastStorageCount, setLastStorageCount] = React.useState(currentStorage);
+  const [isStoragePinging, setIsStoragePinging] = React.useState(false);
+
+  React.useEffect(() => {
+    if (currentStorage > lastStorageCount) {
+      setIsStoragePinging(true);
+      const timer = setTimeout(() => setIsStoragePinging(false), 300);
+      setLastStorageCount(currentStorage);
+      return () => clearTimeout(timer);
+    }
+    setLastStorageCount(currentStorage);
+  }, [currentStorage]);
 
   return (
     <motion.div
@@ -113,14 +142,14 @@ const RadarOverlay: React.FC = () => {
 
           <div className="h-10 w-[1px] bg-space-700 hidden md:block" />
 
-          <div className="hidden md:flex flex-col gap-1 w-48">
+          <div className={`hidden md:flex flex-col gap-1 w-48 transition-transform duration-300 ${isStoragePinging ? 'scale-105' : 'scale-100'}`}>
             <div className="flex items-center justify-between text-[10px] uppercase font-orbitron text-gray-400">
-              <span className="flex items-center gap-1"><Database size={12} /> {t.ui.storage}</span>
-              <span>{Math.floor(storageFillRatio * 100)}%</span>
+              <span className={`flex items-center gap-1 transition-colors ${isStoragePinging ? 'text-neon-blue' : ''}`}><Database size={12} /> {t.ui.storage}</span>
+              <span className={isStoragePinging ? 'text-white' : ''}>{Math.floor(storageFillRatio * 100)}%</span>
             </div>
-            <div className="bg-space-800 h-2 rounded-full overflow-hidden border border-space-700">
+            <div className={`bg-space-800 h-2 rounded-full overflow-hidden border transition-colors ${isStoragePinging ? 'border-neon-blue' : 'border-space-700'}`}>
               <div 
-                className={`h-full transition-all duration-300 ${storageFillRatio > 0.9 ? 'bg-red-500' : 'bg-neon-blue'}`} 
+                className={`h-full transition-all duration-300 ${storageFillRatio > 0.9 ? 'bg-red-500' : 'bg-neon-blue'} ${isStoragePinging ? 'brightness-150' : ''}`} 
                 style={{ width: `${storageFillRatio * 100}%` }}
               />
             </div>
@@ -174,17 +203,37 @@ const RadarOverlay: React.FC = () => {
           animate={{ opacity: 1 }}
           className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-center items-center justify-center z-[210]"
         >
-          <div className="flex flex-col items-center gap-6 p-8 border-2 border-neon-blue rounded-2xl bg-space-950 shadow-[0_0_30px_rgba(0,242,255,0.2)]">
+          <div className="flex flex-col items-center gap-6 p-8 border-2 border-neon-blue rounded-2xl bg-space-950 shadow-[0_0_30px_rgba(0,242,255,0.2)] max-w-sm w-full">
             <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em]">{t.ui.scan_complete || 'Scan Complete'}</h2>
-            <div className="flex flex-col items-center">
-              <span className="text-gray-400 text-sm">{t.ui.total_profit || 'Resources Recovered'}</span>
-              <span className="text-neon-gold text-4xl font-mono">+{Math.floor(radar.sessionEarnedCR)} CR</span>
+            
+            {/* Resource Summary */}
+            <div className="grid grid-cols-2 gap-3 w-full">
+              {Object.entries(radar.sessionResources).map(([type, count]) => {
+                if (count === 0) return null;
+                return (
+                  <div key={type} className="flex items-center gap-3 bg-space-900 border border-space-800 p-2 rounded-lg">
+                    <div className={`w-2 h-2 rounded-full ${RESOURCE_BG[type as ResourceType]}`} />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-500 uppercase font-orbitron">{(t.resources as any)[type]}</span>
+                      <span className="text-sm font-mono text-white">x{count}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+
+            {radar.sessionEarnedCR > 0 && (
+              <div className="flex flex-col items-center border-t border-space-800 pt-4 w-full">
+                <span className="text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">{t.ui.total_profit || 'Overflow Profit'}</span>
+                <span className="text-neon-gold text-2xl font-mono">+{Math.floor(radar.sessionEarnedCR)} CR</span>
+              </div>
+            )}
+
             <button 
               onClick={closeRadar}
-              className="px-12 py-4 bg-neon-blue text-black font-orbitron uppercase tracking-widest rounded-lg hover:bg-cyan-400 transition-colors cursor-pointer"
+              className="w-full py-4 bg-neon-blue text-black font-orbitron uppercase tracking-widest rounded-lg hover:bg-cyan-400 transition-colors cursor-pointer"
             >
-              {t.ui.return_to_base || 'Return to HQ'}
+              {t.ui.return_to_base || 'Return to Base'}
             </button>
           </div>
         </motion.div>

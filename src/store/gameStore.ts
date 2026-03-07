@@ -121,6 +121,12 @@ const INITIAL_RADAR_STATE = {
   grid: [],
   clicksRemaining: 0,
   sessionEarnedCR: 0,
+  sessionResources: {
+    metal: 0,
+    ice: 0,
+    crystal: 0,
+    iridium: 0,
+  },
 };
 
 const INITIAL_STATE_DATA = {
@@ -467,6 +473,7 @@ export const useGameStore = create<GameStore>()(
             energy: state.radar.energy - 1,
             isActive: true,
             sessionEarnedCR: 0,
+            sessionResources: { metal: 0, ice: 0, crystal: 0, iridium: 0 },
             grid,
             clicksRemaining,
           }
@@ -483,6 +490,7 @@ export const useGameStore = create<GameStore>()(
         let newGrid = [...radar.grid];
         let newClicksRemaining = radar.clicksRemaining - 1;
         let newSessionEarnedCR = radar.sessionEarnedCR;
+        let newSessionResources = { ...radar.sessionResources };
         let newDiscoveredResources = [...discoveredResources];
 
         const targetCell = newGrid.find(c => c.id === id)!;
@@ -495,6 +503,7 @@ export const useGameStore = create<GameStore>()(
           get().addNotification('info', t.notifications?.radar_hazard || 'HAZARD! -3 Pulses');
         } else if (targetCell.type === 'resource' && targetCell.resourceDrop) {
           const resType = targetCell.resourceDrop;
+          newSessionResources[resType] += 1;
           
           // Discovery logic
           if (!newDiscoveredResources.includes(resType)) {
@@ -525,6 +534,7 @@ export const useGameStore = create<GameStore>()(
             grid: newGrid,
             clicksRemaining: newClicksRemaining,
             sessionEarnedCR: newSessionEarnedCR,
+            sessionResources: newSessionResources,
           }
         }));
       },
