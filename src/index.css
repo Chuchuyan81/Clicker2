@@ -36,13 +36,13 @@
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%, 100% { transform: translate(0, 0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-2px, -1px); }
+  20%, 40%, 60%, 80% { transform: translate(2px, 1px); }
 }
 
 .animate-shake {
-  animation: shake 0.3s ease-out;
+  animation: shake 0.5s ease-in-out infinite;
 }
 
 @keyframes drift {

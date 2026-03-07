@@ -51,7 +51,7 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language } = useGameStore();
+  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language, isWarping, currentSectorId } = useGameStore();
   const boostActive = boostEndTime > Date.now();
   const t_ui = (translations as any)[language].ui;
   const t_res = (translations as any)[language].resources;
@@ -160,13 +160,20 @@ const CentralScene: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative flex-1 w-full bg-space-950 overflow-hidden flex items-center justify-center border-y border-space-700 touch-none"
+      className={`relative flex-1 w-full overflow-hidden flex items-center justify-center border-y border-space-700 touch-none transition-colors duration-1000
+        ${currentSectorId === 'mars_orbit' ? 'bg-[#1a0505]' : 'bg-space-950'}
+        ${isWarping ? 'animate-shake' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Mars Atmosphere Glow Overlay */}
+      {currentSectorId === 'mars_orbit' && (
+        <div className="absolute inset-0 bg-red-900/10 pointer-events-none z-0" />
+      )}
+      
       <div 
         className="relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform"
         style={{ 

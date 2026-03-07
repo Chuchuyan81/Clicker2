@@ -22,6 +22,7 @@ interface GameStore extends GameState {
   startGame: () => void;
   exitToMenu: () => void;
   resetGame: () => void;
+  warpToSector: (id: SectorId) => void;
   startRadarScan: () => void;
   clickRadarCell: (id: string) => void;
   closeRadar: () => void;
@@ -163,6 +164,7 @@ const INITIAL_STATE_DATA = {
     speed: 1,
   },
   isGameActive: false,
+  isWarping: false,
   currentSectorId: 'asteroid_belt' as SectorId,
   discoveredResources: ['metal' as ResourceType],
   radar: INITIAL_RADAR_STATE,
@@ -446,6 +448,40 @@ export const useGameStore = create<GameStore>()(
       exitToMenu: () => set({ isGameActive: false }),
 
       resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
+
+      warpToSector: (sectorId) => {
+        const { credits, currentSectorId, storage, radar } = get();
+        const sector = SECTORS_CONFIG[sectorId];
+
+        if (sectorId === currentSectorId || credits < sector.unlockCost) return;
+
+        // Start warping
+        set((state) => ({
+          isWarping: true,
+          credits: state.credits - sector.unlockCost,
+          currentSectorId: sectorId,
+          asteroids: [], // Clear asteroids
+          storage: {
+            ...state.storage,
+            current: Object.keys(RESOURCE_CONFIG).reduce((acc, id) => {
+              acc[id as ResourceType] = 0;
+              return acc;
+            }, {} as Record<ResourceType, number>),
+          },
+          radar: {
+            ...state.radar,
+            upgrades: {
+              ...state.radar.upgrades,
+              deepScan: 0, // Reset Deep Scan
+            }
+          }
+        }));
+
+        // End warping after 3 seconds
+        setTimeout(() => {
+          set({ isWarping: false });
+        }, 3000);
+      },
 
       startRadarScan: () => {
         const { radar, currentSectorId } = get();
@@ -817,6 +853,7 @@ export const useGameStore = create<GameStore>()(
         multipliers: state.multipliers,
         lastSeen: state.lastSeen,
         isGameActive: state.isGameActive,
+        isWarping: false, // Don't persist warp state as active
         currentSectorId: state.currentSectorId,
         discoveredResources: state.discoveredResources,
         radar: state.radar,

@@ -92,6 +92,7 @@ export interface GameState {
   };
   asteroids: ClickableAsteroid[];
   isGameActive: boolean;
+  isWarping: boolean;
   currentSectorId: SectorId;
   discoveredResources: ResourceType[];
   radar: RadarState;
