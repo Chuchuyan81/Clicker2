@@ -142,7 +142,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                       <div>
                         <h3 className="font-orbitron text-sm text-white mb-0.5">{droneInfo.name}</h3>
                         <div className="flex gap-3 mt-1">
-                          <div className="flex items-center gap-1 text-[9px] text-gray-400 font-mono"><Timer size={10} /> {config.speed}s</div>
+                          <div className="flex items-center gap-1 text-[9px] text-gray-400 font-mono"><Timer size={10} /> {config.speed} {t.ui.seconds_short}</div>
                           <div className="flex items-center gap-1 text-[9px] text-gray-400 font-mono"><Zap size={10} /> {config.miningRate} r/s</div>
                         </div>
                         <p className="text-[10px] text-gray-500 mt-1">{droneInfo.description}</p>

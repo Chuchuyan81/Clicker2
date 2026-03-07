@@ -145,13 +145,14 @@ const App: React.FC = () => {
       {/* 🔘 Нижняя панель действий */}
       <footer className="h-20 md:h-24 border-t border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-4 md:px-6 justify-center gap-2 md:gap-6 z-50 shrink-0">
         <button 
-          onClick={() => activateMiningBurst()} 
+          onClick={() => !boostActive && activateMiningBurst()} 
+          disabled={boostActive}
           className={`group relative flex-1 max-w-[80px] md:max-w-[100px] flex flex-col items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200 neon-border h-16 md:h-20 cursor-pointer
-            ${boostActive ? 'bg-neon-blue/20 ring-2 ring-neon-blue shadow-[0_0_15px_rgba(0,242,255,0.4)]' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
+            ${boostActive ? 'bg-neon-blue/20 ring-2 ring-neon-blue shadow-[0_0_15px_rgba(0,242,255,0.4)] opacity-70 grayscale cursor-not-allowed' : 'hover:bg-space-700 bg-space-800 active:scale-95'}`}
         >
           <Zap size={18} className={`mb-1 ${boostActive ? 'text-neon-blue animate-pulse' : 'text-neon-blue md:group-hover:scale-110'} transition-transform`} />
           <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">
-            {boostActive ? `${boostRemainingSec}s` : t.ui.overclock}
+            {boostActive ? `${boostRemainingSec} ${t.ui.seconds_short}` : t.ui.overclock}
           </span>
         </button>
 
