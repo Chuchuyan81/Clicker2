@@ -11,7 +11,9 @@
   --color-neon-metal: #94a3b8;
 
   /* Fonts */
-  --font-orbitron: "Orbitron", sans-serif;
+  --font-play: "Play", sans-serif;
+  --font-orbitron: "Play", sans-serif;
+  --font-sans: "Play", sans-serif;
   --font-mono: "Fira Code", monospace;
 }
 
