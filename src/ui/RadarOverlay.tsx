@@ -89,12 +89,7 @@ const RadarOverlay: React.FC = () => {
   const { radar, closeRadar, storage, language } = useGameStore();
   const t = (translations as any)[language];
 
-  if (!radar.isActive) return null;
-
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
-  const storageFillRatio = currentStorage / storage.capacity;
-  const gridSize = Math.sqrt(radar.grid.length);
-
   const [lastStorageCount, setLastStorageCount] = React.useState(currentStorage);
   const [isStoragePinging, setIsStoragePinging] = React.useState(false);
 
@@ -106,7 +101,12 @@ const RadarOverlay: React.FC = () => {
       return () => clearTimeout(timer);
     }
     setLastStorageCount(currentStorage);
-  }, [currentStorage]);
+  }, [currentStorage, lastStorageCount]);
+
+  if (!radar.isActive) return null;
+
+  const storageFillRatio = currentStorage / storage.capacity;
+  const gridSize = Math.sqrt(radar.grid.length);
 
   return (
     <motion.div
