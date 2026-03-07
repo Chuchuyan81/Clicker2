@@ -27,10 +27,10 @@ interface GameStore extends GameState {
   upgradeRadar: (id: keyof RadarUpgrades) => boolean;
 }
 
-const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string }> = {
-  basic: { name: 'Basic Drone', speed: 3, miningRate: 5, cost: 50 },
-  scout: { name: 'Scout Drone', speed: 2.5, miningRate: 3, cost: 150 },
-  heavy: { name: 'Heavy Hauler', speed: 8, miningRate: 25, cost: 300 },
+const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string, capacity: number }> = {
+  basic: { name: 'Basic Drone', speed: 3, miningRate: 5, cost: 50, capacity: 50 },
+  scout: { name: 'Scout Drone', speed: 2.5, miningRate: 3, cost: 150, capacity: 20 },
+  heavy: { name: 'Heavy Hauler', speed: 8, miningRate: 25, cost: 300, capacity: 200 },
 };
 
 const INITIAL_UPGRADES: Record<string, Upgrade> = {
@@ -229,7 +229,7 @@ export const useGameStore = create<GameStore>()(
                 type,
                 speed: config.speed,
                 miningRate: config.miningRate,
-                capacity: 50,
+                capacity: config.capacity,
                 targetResource: 'metal',
                 progress: 0,
                 state: 'flying_out',
@@ -266,7 +266,7 @@ export const useGameStore = create<GameStore>()(
             let newAutomationEnabled = state.automationEnabled;
 
             if (id === 'refinery') newMultipliers.price = 1 + newLevel * 0.2;
-            if (id === 'cargo_bay') newStorageCapacity = 100 + newLevel * 50;
+            if (id === 'cargo_bay') newStorageCapacity = Math.floor(100 * Math.pow(1.5, newLevel));
             if (id === 'automation') newAutomationEnabled = true;
 
             return {
@@ -566,7 +566,7 @@ export const useGameStore = create<GameStore>()(
         let cost = 0;
         let maxLevel = 99;
         if (id === 'battery') cost = 200 * Math.pow(2, level);
-        if (id === 'deepScan') { cost = 500 * Math.pow(3, level); maxLevel = 3; }
+        if (id === 'deepScan') { cost = 1000 * Math.pow(4, level); maxLevel = 3; }
         if (id === 'gridSize') { cost = 1000 * Math.pow(4, level); maxLevel = 2; }
         if (id === 'sonar') cost = 300 * Math.pow(2.5, level);
 
