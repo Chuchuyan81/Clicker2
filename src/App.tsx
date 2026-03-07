@@ -5,7 +5,7 @@ import CentralScene from './ui/CentralScene';
 import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
 import RadarOverlay from './ui/RadarOverlay';
-import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home } from 'lucide-react';
+import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database } from 'lucide-react';
 import { translations } from './translations';
 
 const App: React.FC = () => {
