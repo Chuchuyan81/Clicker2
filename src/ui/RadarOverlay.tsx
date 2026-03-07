@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
-import { X, Zap, Battery, Database, Radiation, MousePointer2 } from 'lucide-react';
+import { X, Database, Radiation, MousePointer2, Battery, AlertTriangle } from 'lucide-react';
 import { RadarCell as RadarCellType, ResourceType } from '../types';
 import { translations } from '../translations';
 
@@ -20,7 +20,8 @@ const RESOURCE_BG: Record<ResourceType, string> = {
 };
 
 const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
-  const { clickRadarCell } = useGameStore();
+  const { clickRadarCell, language } = useGameStore();
+  const t = (translations as any)[language];
 
   const getAdjacentColor = (count: number) => {
     if (count === 0) return 'text-gray-600';
@@ -69,15 +70,13 @@ const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
                   animate={{ y: -40, opacity: 0 }}
                   className="absolute pointer-events-none font-orbitron text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded"
                 >
-                  +1 {(translations as any)[useGameStore.getState().language].resources[cell.resourceDrop]}
+                  +1 {t.resources[cell.resourceDrop]}
                 </motion.div>
               </>
             )}
             
-            {/* Scanline effect for resources */}
-            {cell.type === 'resource' && (
-              <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,242,255,0.05)_50%)] bg-[length:100%_4px] pointer-events-none" />
-            )}
+            {/* Scanline effect */}
+            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,242,255,0.02)_50%)] bg-[length:100%_4px] pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -87,8 +86,7 @@ const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
 
 const RadarOverlay: React.FC = () => {
   const { radar, closeRadar, storage, language } = useGameStore();
-  const t = (translations as any)[language];
-
+  
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
   const [lastStorageCount, setLastStorageCount] = React.useState(currentStorage);
   const [isStoragePinging, setIsStoragePinging] = React.useState(false);
@@ -105,6 +103,7 @@ const RadarOverlay: React.FC = () => {
 
   if (!radar.isActive) return null;
 
+  const t = (translations as any)[language];
   const storageFillRatio = currentStorage / storage.capacity;
   const gridSize = Math.sqrt(radar.grid.length);
 
@@ -196,15 +195,15 @@ const RadarOverlay: React.FC = () => {
         </div>
       </div>
 
-      {/* Out of pulses screen */}
+      {/* End Screen */}
       {radar.clicksRemaining <= 0 && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-center items-center justify-center z-[210]"
+          className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-center items-center justify-center z-[210] p-4"
         >
           <div className="flex flex-col items-center gap-6 p-8 border-2 border-neon-blue rounded-2xl bg-space-950 shadow-[0_0_30px_rgba(0,242,255,0.2)] max-w-sm w-full">
-            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em]">{t.ui.scan_complete || 'Scan Complete'}</h2>
+            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em] text-center">{t.ui.scan_complete || 'Scan Complete'}</h2>
             
             {/* Resource Summary */}
             <div className="grid grid-cols-2 gap-3 w-full">

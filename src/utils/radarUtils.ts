@@ -2,13 +2,10 @@ import { RadarCell, RadarUpgrades, ResourceType } from '../types';
 
 export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
   const size = upgrades.gridSize === 0 ? 5 : upgrades.gridSize === 1 ? 6 : 8;
-  const grid: RadarCell[] = [];
   const totalCells = size * size;
+  const grid: RadarCell[] = [];
 
-  const hazardCount = Math.floor(totalCells * 0.10);
-  const resourceCount = Math.floor(totalCells * 0.25);
-
-  // Initialize empty cells
+  // Initialize empty grid
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       grid.push({
@@ -22,48 +19,33 @@ export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
     }
   }
 
-  // Helper to get random available cells
-  const getAvailableIndices = () => {
-    return grid
-      .map((cell, index) => (cell.type === 'empty' ? index : -1))
-      .filter((index) => index !== -1);
+  // Calculate counts
+  const hazardCount = Math.floor(totalCells * 0.1);
+  const resourceCount = Math.floor(totalCells * 0.25);
+
+  const getRandomCell = (filter: (c: RadarCell) => boolean) => {
+    const available = grid.filter(filter);
+    if (available.length === 0) return null;
+    return available[Math.floor(Math.random() * available.length)];
   };
 
-  // Place hazards
+  // Place Hazards
   for (let i = 0; i < hazardCount; i++) {
-    const indices = getAvailableIndices();
-    if (indices.length === 0) break;
-    const randomIndex = indices[Math.floor(Math.random() * indices.length)];
-    grid[randomIndex].type = 'hazard';
+    const cell = getRandomCell(c => c.type === 'empty');
+    if (cell) cell.type = 'hazard';
   }
 
-  // Place resources
+  // Place Resources
   for (let i = 0; i < resourceCount; i++) {
-    const indices = getAvailableIndices();
-    if (indices.length === 0) break;
-    const randomIndex = indices[Math.floor(Math.random() * indices.length)];
-    grid[randomIndex].type = 'resource';
-    
-    // Determine resource type based on deepScan level
-    const rand = Math.random();
-    let resType: ResourceType = 'metal';
-    if (upgrades.deepScan === 1) {
-      resType = rand < 0.3 ? 'ice' : 'metal';
-    } else if (upgrades.deepScan === 2) {
-      if (rand < 0.15) resType = 'crystal';
-      else if (rand < 0.40) resType = 'ice';
-      else resType = 'metal';
-    } else if (upgrades.deepScan === 3) {
-      if (rand < 0.10) resType = 'iridium';
-      else if (rand < 0.25) resType = 'crystal';
-      else if (rand < 0.50) resType = 'ice';
-      else resType = 'metal';
+    const cell = getRandomCell(c => c.type === 'empty');
+    if (cell) {
+      cell.type = 'resource';
+      cell.resourceDrop = getResourceByDeepScan(upgrades.deepScan);
     }
-    grid[randomIndex].resourceDrop = resType;
   }
 
-  // Calculate adjacentCount
-  grid.forEach((cell) => {
+  // Calculate Adjacent Counts
+  grid.forEach(cell => {
     let count = 0;
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
@@ -71,60 +53,72 @@ export const generateRadarGrid = (upgrades: RadarUpgrades): RadarCell[] => {
         const nx = cell.x + dx;
         const ny = cell.y + dy;
         if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-          const neighbor = grid.find((c) => c.x === nx && c.y === ny);
-          if (neighbor && (neighbor.type === 'resource' || neighbor.type === 'hazard')) {
-            count++;
-          }
+          const neighbor = grid[ny * size + nx];
+          if (neighbor.type !== 'empty') count++;
         }
       }
     }
     cell.adjacentCount = count;
   });
 
-  // Sonar (Auto-reveal resources)
+  // Sonar Logic: Auto-reveal N resource cells
   if (upgrades.sonar > 0) {
-    const resourceIndices = grid
-      .map((cell, index) => (cell.type === 'resource' ? index : -1))
-      .filter((index) => index !== -1);
-    
-    const revealCount = Math.min(upgrades.sonar, resourceIndices.length);
-    for (let i = 0; i < revealCount; i++) {
-      const randomIndex = Math.floor(Math.random() * resourceIndices.length);
-      const index = resourceIndices.splice(randomIndex, 1)[0];
-      grid[index].revealed = true;
+    const resources = grid.filter(c => c.type === 'resource');
+    const toReveal = Math.min(upgrades.sonar, resources.length);
+    for (let i = 0; i < toReveal; i++) {
+      const idx = Math.floor(Math.random() * resources.length);
+      const cell = resources.splice(idx, 1)[0];
+      cell.revealed = true;
     }
   }
 
   return grid;
 };
 
+const getResourceByDeepScan = (level: number): ResourceType => {
+  const rand = Math.random();
+  if (level === 0) return 'metal';
+  if (level === 1) {
+    if (rand < 0.3) return 'ice';
+    return 'metal';
+  }
+  if (level === 2) {
+    if (rand < 0.15) return 'crystal';
+    if (rand < 0.4) return 'ice';
+    return 'metal';
+  }
+  // lvl 3+
+  if (rand < 0.1) return 'iridium';
+  if (rand < 0.25) return 'crystal';
+  if (rand < 0.5) return 'ice';
+  return 'metal';
+};
+
 export const revealEmptyCells = (grid: RadarCell[], startCell: RadarCell, size: number): RadarCell[] => {
   const newGrid = [...grid];
-  const stack = [startCell];
+  const queue = [startCell];
   const visited = new Set<string>();
 
-  while (stack.length > 0) {
-    const cell = stack.pop()!;
+  while (queue.length > 0) {
+    const cell = queue.shift()!;
     if (visited.has(cell.id)) continue;
     visited.add(cell.id);
 
-    const gridCell = newGrid.find(c => c.id === cell.id);
-    if (gridCell) {
-      gridCell.revealed = true;
-      
-      // If it's an empty cell with 0 adjacent neighbors, continue spreading
-      if (gridCell.type === 'empty' && gridCell.adjacentCount === 0) {
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = gridCell.x + dx;
-            const ny = gridCell.y + dy;
-            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-              const neighbor = newGrid.find(c => c.x === nx && c.y === ny);
-              if (neighbor && !neighbor.revealed && neighbor.type === 'empty') {
-                stack.push(neighbor);
-              }
-            }
+    const target = newGrid.find(c => c.id === cell.id);
+    if (!target || target.type !== 'empty') continue;
+
+    target.revealed = true;
+
+    // If it's a "0" cell, reveal neighbors
+    if (target.adjacentCount === 0) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = target.x + dx;
+          const ny = target.y + dy;
+          if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+            const neighbor = newGrid[ny * size + nx];
+            if (!neighbor.revealed) queue.push(neighbor);
           }
         }
       }

@@ -490,7 +490,7 @@ export const useGameStore = create<GameStore>()(
         let newGrid = [...radar.grid];
         let newClicksRemaining = radar.clicksRemaining - 1;
         let newSessionEarnedCR = radar.sessionEarnedCR;
-        let newSessionResources = { ...radar.sessionResources };
+        const newSessionResources = { ...radar.sessionResources };
         let newDiscoveredResources = [...discoveredResources];
 
         const targetCell = newGrid.find(c => c.id === id)!;
@@ -498,29 +498,45 @@ export const useGameStore = create<GameStore>()(
 
         if (targetCell.type === 'hazard') {
           newClicksRemaining = Math.max(0, newClicksRemaining - 3);
-          // Add info notification about penalty
           const t = (translations as any)[get().language];
           get().addNotification('info', t.notifications?.radar_hazard || 'HAZARD! -3 Pulses');
         } else if (targetCell.type === 'resource' && targetCell.resourceDrop) {
           const resType = targetCell.resourceDrop;
-          newSessionResources[resType] += 1;
           
-          // Discovery logic
-          if (!newDiscoveredResources.includes(resType)) {
-            newDiscoveredResources.push(resType);
+          // --- Алгоритм "Плотных залежей" (Step 3) ---
+          const baseStorageMax = storage.capacity;
+          const volumeFound = Math.max(5, Math.floor(baseStorageMax * 0.05));
+          
+          const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+          const freeSpace = baseStorageMax - totalStored;
+
+          if (volumeFound <= freeSpace) {
+            // Влезает полностью
+            addResourceToStorage(resType, volumeFound);
+          } else {
+            // Часть влезает, часть в Overflow
+            const overflowVolume = volumeFound - Math.max(0, freeSpace);
+            if (freeSpace > 0) {
+              addResourceToStorage(resType, freeSpace);
+            }
+            
+            // Штрафная продажа (75% цены)
+            const resourcePrice = resources[resType].basePrice * multipliers.price;
+            const creditsEarned = Math.floor(overflowVolume * resourcePrice * 0.75);
+            
+            addCredits(creditsEarned);
+            newSessionEarnedCR += creditsEarned;
+            get().addNotification('info', `OVERFLOW: +${creditsEarned} CR`);
           }
 
-          // Storage check
-          const currentTotal = Object.values(storage.current).reduce((a, b) => a + b, 0);
-          if (currentTotal < storage.capacity) {
-            addResourceToStorage(resType, 1);
-          } else {
-            // Auto-sell overflow
-            const price = resources[resType].basePrice * multipliers.price;
-            addCredits(price);
-            newSessionEarnedCR += price;
-            // Notification about overflow
-            get().addNotification('info', `OVERFLOW: +${Math.floor(price)} CR`);
+          // Статистика сессии
+          newSessionResources[resType] += volumeFound;
+
+          // Система открытий
+          if (!newDiscoveredResources.includes(resType)) {
+            newDiscoveredResources.push(resType);
+            const t = (translations as any)[get().language];
+            get().addNotification('info', t.ui.resource_identified || 'NEW RESOURCE!');
           }
         } else if (targetCell.type === 'empty' && targetCell.adjacentCount === 0) {
           const size = Math.sqrt(radar.grid.length);

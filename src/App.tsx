@@ -21,7 +21,7 @@ const App: React.FC = () => {
   } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive'>('upgrades');
+  const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive' | 'radar'>('upgrades');
 
   const t = (translations as any)[language];
   const boostActive = boostEndTime > Date.now();
@@ -48,7 +48,7 @@ const App: React.FC = () => {
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
   const storageFillRatio = currentStorage / storage.capacity;
 
-  const openUpgradeModal = (tab: 'upgrades' | 'drones' | 'archive') => {
+  const openUpgradeModal = (tab: 'upgrades' | 'drones' | 'archive' | 'radar') => {
     setModalTab(tab);
     setModalOpen(true);
   };
@@ -179,12 +179,12 @@ const App: React.FC = () => {
             <Database size={18} className="text-neon-blue" />
             <div className="absolute -top-1 -right-1 flex gap-0.5">
               {Array.from({ length: radar.maxEnergy }).map((_, i) => (
-                <div key={i} className={`w-1 h-1 rounded-full ${i < radar.energy ? 'bg-neon-blue' : 'bg-gray-600'}`} />
+                <div key={i} className={`w-1.5 h-1.5 rounded-full border border-black shadow-sm ${i < radar.energy ? 'bg-neon-blue' : 'bg-gray-600'}`} />
               ))}
             </div>
           </div>
           <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">
-            {radar.energy < radar.maxEnergy ? radarTimerFormatted : t.ui.start_scan}
+            {radar.energy < radar.maxEnergy && radar.energy === 0 ? radarTimerFormatted : t.ui.start_scan}
           </span>
         </button>
 
