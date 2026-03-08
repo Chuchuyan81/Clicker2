@@ -78,7 +78,7 @@ const CentralScene: React.FC = () => {
   // Reset camera on warp
   useEffect(() => {
     if (isWarping) {
-      setZoom(1);
+      setZoom(0.5);
       setOffset({ x: 0, y: 0 });
     }
   }, [isWarping]);
@@ -97,7 +97,7 @@ const CentralScene: React.FC = () => {
     lastDiscoveredCount.current = discoveredResources.length;
   }, [discoveredResources]);
 
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.5);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -107,20 +107,20 @@ const CentralScene: React.FC = () => {
   // --- Zoom logic (Mouse wheel) ---
   const handleWheel = (e: React.WheelEvent) => {
     const delta = -e.deltaY;
-    const newZoom = Math.max(1, Math.min(zoom + delta * 0.001, 3));
+    const newZoom = Math.max(0.5, Math.min(zoom + delta * 0.001, 3));
     setZoom(newZoom);
-    if (newZoom === 1) setOffset({ x: 0, y: 0 });
+    if (newZoom <= 0.5) setOffset({ x: 0, y: 0 });
   };
 
   // --- Panning logic (Mouse) ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom <= 1) return;
+    if (zoom <= 0.5) return;
     setIsDragging(true);
     dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || zoom <= 1) return;
+    if (!isDragging || zoom <= 0.5) return;
     setOffset({
       x: e.clientX - dragStart.current.x,
       y: e.clientY - dragStart.current.y
@@ -137,7 +137,7 @@ const CentralScene: React.FC = () => {
         e.touches[0].clientY - e.touches[1].clientY
       );
       lastTouchDistance.current = dist;
-    } else if (e.touches.length === 1 && zoom > 1) {
+    } else if (e.touches.length === 1 && zoom > 0.5) {
       setIsDragging(true);
       dragStart.current = { x: e.touches[0].clientX - offset.x, y: e.touches[0].clientY - offset.y };
     }
@@ -150,11 +150,11 @@ const CentralScene: React.FC = () => {
         e.touches[0].clientY - e.touches[1].clientY
       );
       const delta = dist - lastTouchDistance.current;
-      const newZoom = Math.max(1, Math.min(zoom + delta * 0.01, 3));
+      const newZoom = Math.max(0.5, Math.min(zoom + delta * 0.01, 3));
       setZoom(newZoom);
-      if (newZoom === 1) setOffset({ x: 0, y: 0 });
+      if (newZoom <= 0.5) setOffset({ x: 0, y: 0 });
       lastTouchDistance.current = dist;
-    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
+    } else if (e.touches.length === 1 && isDragging && zoom > 0.5) {
       setOffset({
         x: e.touches[0].clientX - dragStart.current.x,
         y: e.touches[0].clientY - dragStart.current.y
