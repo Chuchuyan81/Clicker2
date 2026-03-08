@@ -46,6 +46,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
       "",
       "СООБЩЕНИЕ:",
       "\"Добро пожаловать в Exo-Mine. Твое корыто пришвартовано в Поясе Астероидов.\"",
+      "\"Мы выделили тебе одного дрона для затравки. Но не надейся на халяву.\"",
       "\"План на сегодня: копай, продавай, не умирай. Нам нужны наши деньги.\"",
       "\"Удачи, винтик.\""
     ] : [
@@ -55,6 +56,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
       "",
       "MESSAGE:",
       "\"Welcome to Exo-Mine. Your bucket is docked in the Asteroid Belt.\"",
+      "\"We've assigned one basic drone to your station to get you started.\"",
       "\"Plan for today: dig, sell, don't die. We need our money.\"",
       "\"Good luck, cog.\""
     ];
@@ -126,7 +128,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-sm md:text-base">
               <div className="w-full max-w-2xl flex flex-col gap-1 min-h-[300px]">
                 {bootLines.map((line, i) => (
-                  <div key={i} className={line.startsWith('"') ? "text-green-400/80 italic pl-4" : ""}>
+                  <div key={i} className={line.startsWith('"') ? "text-green-400/80 pl-4" : ""}>
                     {line}
                   </div>
                 ))}
