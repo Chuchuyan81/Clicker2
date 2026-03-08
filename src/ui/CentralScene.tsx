@@ -51,17 +51,14 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
   ice: { base: 'bg-blue-950', border: 'border-blue-800', glow: 'bg-white/10' },
   crystal: { base: 'bg-purple-950', border: 'border-purple-800', glow: 'bg-fuchsia-500/10' },
   iridium: { base: 'bg-amber-950', border: 'border-amber-800', glow: 'bg-yellow-500/10' },
-  rust_dust: { base: 'bg-orange-950', border: 'border-orange-900', glow: 'bg-orange-500/10' },
   red_obsidian: { base: 'bg-red-950', border: 'border-red-900', glow: 'bg-red-500/10' },
-  mars_ice: { base: 'bg-cyan-950', border: 'border-cyan-900', glow: 'bg-cyan-500/10' },
-  phobos_core: { base: 'bg-rose-950', border: 'border-rose-900', glow: 'bg-rose-500/10' },
-  liquid_methane: { base: 'bg-emerald-950', border: 'border-emerald-900', glow: 'bg-emerald-500/10' },
-  dark_matter: { base: 'bg-gray-900', border: 'border-gray-800', glow: 'bg-purple-500/10' },
-  hexagonal_ice: { base: 'bg-blue-900', border: 'border-blue-700', glow: 'bg-blue-400/10' },
-  frozen_nitrogen: { base: 'bg-indigo-950', border: 'border-indigo-900', glow: 'bg-indigo-500/10' },
-  isotope_238: { base: 'bg-lime-950', border: 'border-lime-900', glow: 'bg-lime-500/10' },
-  exotic_matter: { base: 'bg-violet-950', border: 'border-violet-900', glow: 'bg-violet-500/10' },
-  pure_energy: { base: 'bg-white/10', border: 'border-white/30', glow: 'bg-white/20' },
+  martian_dust: { base: 'bg-orange-950', border: 'border-orange-900', glow: 'bg-orange-500/10' },
+  frozen_gas: { base: 'bg-emerald-950', border: 'border-emerald-900', glow: 'bg-emerald-500/10' },
+  liquid_metal_core: { base: 'bg-gray-900', border: 'border-gray-800', glow: 'bg-purple-500/10' },
+  ring_ice: { base: 'bg-blue-900', border: 'border-blue-700', glow: 'bg-blue-400/10' },
+  dark_matter_t4: { base: 'bg-indigo-950', border: 'border-indigo-900', glow: 'bg-indigo-500/10' },
+  antimatter: { base: 'bg-lime-950', border: 'border-lime-900', glow: 'bg-lime-500/10' },
+  alien_relics: { base: 'bg-violet-950', border: 'border-violet-900', glow: 'bg-violet-500/10' },
 };
 
 const CentralScene: React.FC = () => {
@@ -187,15 +184,15 @@ const CentralScene: React.FC = () => {
   const getSectorStyles = () => {
     switch(currentSectorId) {
       case 'mars_orbit': return 'bg-[#0a0202]';
+      case 'jupiter_moons': return 'bg-[#051a10]'; // Dark green tint for Jupiter
       case 'saturn_rings': return 'bg-[#1a1505]';
       case 'kuiper_belt': return 'bg-[#050a1a]';
-      case 'accretion_disk': return 'bg-black animate-accretion-hue';
       default: return 'bg-space-950';
     }
   };
 
   const getZoomLevel = () => {
-    if (currentSectorId === 'accretion_disk') return zoom * 1.5;
+    if (currentSectorId === 'kuiper_belt') return zoom * 1.5;
     return zoom;
   };
 
@@ -204,7 +201,7 @@ const CentralScene: React.FC = () => {
       ref={containerRef}
       className={`relative flex-1 w-full overflow-hidden flex items-center justify-center border-y border-space-700 touch-none transition-colors duration-1000
         ${getSectorStyles()}
-        ${(isWarping || currentSectorId === 'accretion_disk') ? 'animate-shake' : ''}`}
+        ${(isWarping || currentSectorId === 'kuiper_belt') ? 'animate-shake' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -220,6 +217,9 @@ const CentralScene: React.FC = () => {
       {currentSectorId === 'mars_orbit' && (
         <div className="absolute inset-0 z-5 bg-red-950/10 pointer-events-none" />
       )}
+      {currentSectorId === 'jupiter_moons' && (
+        <div className="absolute inset-0 z-5 bg-emerald-950/10 pointer-events-none" />
+      )}
       {currentSectorId === 'saturn_rings' && (
         <>
           <div className="absolute inset-0 z-5 bg-yellow-950/10 pointer-events-none" />
@@ -234,9 +234,6 @@ const CentralScene: React.FC = () => {
           <div className="absolute inset-0 z-5 bg-blue-900/20 pointer-events-none" />
           <div className="absolute inset-0 z-5 bg-white/[0.02] animate-kuiper-static pointer-events-none mix-blend-overlay" />
         </>
-      )}
-      {currentSectorId === 'accretion_disk' && (
-        <div className="absolute inset-0 z-5 bg-purple-900/10 pointer-events-none mix-blend-color-dodge animate-accretion-distort" />
       )}
 
       {/* Tier 4: Energy HUD */}
@@ -322,7 +319,7 @@ const CentralScene: React.FC = () => {
       
       {/* 3. Game Objects Layer (Zoomable/Pannable) */}
       <div 
-        className={`relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform z-30 ${currentSectorId === 'accretion_disk' ? 'blur-[0.5px]' : ''}`}
+        className={`relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform z-30 ${currentSectorId === 'kuiper_belt' ? 'blur-[0.5px]' : ''}`}
         style={{ 
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${getZoomLevel()})`,
           cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'

@@ -30,6 +30,38 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             className="bg-slate-950 border border-blue-500/30 rounded-3xl w-full max-w-5xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8),0_0_30px_rgba(59,130,246,0.1)] flex flex-col max-h-[90vh] text-blue-100 relative"
           >
+            {/* Blueprint Grid Background */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none" 
+              style={{ 
+                backgroundImage: `
+                  linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+                `,
+                backgroundSize: '40px 40px'
+              }} 
+            />
+            
+            {/* Orbits Visualization (Blueprint Style) */}
+            <div className="absolute top-0 right-0 w-full h-[300px] opacity-[0.15] pointer-events-none overflow-hidden mix-blend-screen">
+              <svg className="w-full h-full" viewBox="0 0 1000 300">
+                {/* Central Sun */}
+                <circle cx="500" cy="450" r="100" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" className="text-blue-400" />
+                {/* Orbits */}
+                <circle cx="500" cy="450" r="200" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10,5" className="text-blue-500" />
+                <circle cx="500" cy="450" r="300" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10,5" className="text-blue-500" />
+                <circle cx="500" cy="450" r="400" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10,5" className="text-blue-500" />
+                <circle cx="500" cy="450" r="500" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="10,5" className="text-blue-500" />
+                
+                {/* Coordinate Lines */}
+                <line x1="0" y1="150" x2="1000" y2="150" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2,2" className="text-blue-600" />
+                <line x1="500" y1="0" x2="500" y2="300" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2,2" className="text-blue-600" />
+                
+                {/* Labels */}
+                <text x="510" y="40" className="text-[10px] fill-blue-400 font-mono tracking-widest uppercase">SOLAR_SYSTEM_SCHEMATIC</text>
+                <text x="510" y="280" className="text-[8px] fill-blue-500 font-mono opacity-50 tracking-widest uppercase">COORD_REF: ALPHA-01</text>
+              </svg>
+            </div>
+
             {/* Scanline Effect */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] pointer-events-none z-10" />
 
@@ -42,7 +74,7 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <h2 className="text-3xl font-orbitron font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-                      {t.warp_menu.title}
+                      {language === 'ru' ? 'КАРТА СИСТЕМЫ (BLUEPRINT)' : 'SYSTEM MAP (BLUEPRINT)'}
                     </h2>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-[10px] text-blue-400 font-mono tracking-[0.3em] uppercase opacity-70">{t.warp_menu.system_status}</span>

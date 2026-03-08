@@ -6,6 +6,8 @@ import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
 import RadarOverlay from './ui/RadarOverlay';
 import StarmapModal from './ui/StarmapModal';
+import IntroTerminal from './ui/IntroTerminal';
+import TutorialManager from './ui/TutorialManager';
 import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
@@ -19,7 +21,8 @@ const App: React.FC = () => {
   const { 
     credits, drones, storage, transport, startTransport, activateMiningBurst, 
     boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu,
-    radar, startRadarScan, isWarping, currentSectorId
+    radar, startRadarScan, isWarping, currentSectorId,
+    hasSeenIntro, tutorialStep
   } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -79,6 +82,7 @@ const App: React.FC = () => {
           <button 
             onClick={() => setStarmapOpen(true)}
             className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group relative"
+            title={t.ui.starmap}
           >
             <Map size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
             <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-neon-blue rounded-full animate-pulse shadow-[0_0_5px_rgba(0,242,255,0.8)]" />
@@ -232,6 +236,10 @@ const App: React.FC = () => {
         onClose={() => setStarmapOpen(false)}
       />
       <RadarOverlay />
+      
+      {/* Onboarding & Tutorial */}
+      {!hasSeenIntro && <IntroTerminal />}
+      {hasSeenIntro && tutorialStep > 0 && <TutorialManager />}
 
       {/* Warp Flash Effect */}
       <AnimatePresence>

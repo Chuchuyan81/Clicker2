@@ -64,17 +64,14 @@ export const translations = {
       ice: "Космический лед",
       crystal: "Кристаллы",
       iridium: "Иридий",
-      rust_dust: "Ржавая пыль",
       red_obsidian: "Красный Обсидиан",
-      mars_ice: "Марсианский Лед",
-      phobos_core: "Ядро Фобоса",
-      liquid_methane: "Жидкий метан",
-      dark_matter: "Темная материя",
-      hexagonal_ice: "Гексагональный лед",
-      frozen_nitrogen: "Замерзший азот",
-      isotope_238: "Изотоп-238",
-      exotic_matter: "Экзотическая материя",
-      pure_energy: "Чистая энергия",
+      martian_dust: "Марсианская пыль",
+      frozen_gas: "Замерзший Газ",
+      liquid_metal_core: "Жидкометаллическое Ядро",
+      ring_ice: "Кольцевой Лед",
+      dark_matter_t4: "Темная материя",
+      antimatter: "Антиматерия",
+      alien_relics: "Реликты пришельцев",
     },
     upgrades: {
       refinery: {
@@ -166,16 +163,16 @@ export const translations = {
       subtitles: {
         asteroid_belt: "Край фронтира",
         mars_orbit: "Наследие красной пыли",
+        jupiter_moons: "Замерзший гигант",
         saturn_rings: "Золотая турбулентность",
         kuiper_belt: "Ледяная тишина",
-        accretion_disk: "Сингулярность",
       },
       sector_names: {
         asteroid_belt: "Пояс Астероидов",
         mars_orbit: "Орбита Марса",
+        jupiter_moons: "Спутники Юпитера",
         saturn_rings: "Кольца Сатурна",
         kuiper_belt: "Пояс Койпера",
-        accretion_disk: "Аккреционный диск",
       }
     }
   },
@@ -244,17 +241,14 @@ export const translations = {
       ice: "Space Ice",
       crystal: "Crystals",
       iridium: "Iridium",
-      rust_dust: "Rust Dust",
       red_obsidian: "Red Obsidian",
-      mars_ice: "Mars Ice",
-      phobos_core: "Phobos Core",
-      liquid_methane: "Liquid Methane",
-      dark_matter: "Dark Matter",
-      hexagonal_ice: "Hexagonal Ice",
-      frozen_nitrogen: "Frozen Nitrogen",
-      isotope_238: "Isotope-238",
-      exotic_matter: "Exotic Matter",
-      pure_energy: "Pure Energy",
+      martian_dust: "Martian Dust",
+      frozen_gas: "Frozen Gas",
+      liquid_metal_core: "Liquid Metal Core",
+      ring_ice: "Ring Ice",
+      dark_matter_t4: "Dark Matter",
+      antimatter: "Antimatter",
+      alien_relics: "Alien Relics",
     },
     upgrades: {
       refinery: {
@@ -346,16 +340,16 @@ export const translations = {
       subtitles: {
         asteroid_belt: "The Frontier Edge",
         mars_orbit: "Red Dust Legacy",
+        jupiter_moons: "The Frozen Giant",
         saturn_rings: "Golden Turbulence",
         kuiper_belt: "Frozen Silence",
-        accretion_disk: "The Singularity",
       },
       sector_names: {
         asteroid_belt: "Asteroid Belt",
         mars_orbit: "Mars Orbit",
+        jupiter_moons: "Jupiter Moons",
         saturn_rings: "Saturn Rings",
         kuiper_belt: "Kuiper Belt",
-        accretion_disk: "Accretion Disk",
       }
     }
   }

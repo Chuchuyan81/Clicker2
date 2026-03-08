@@ -28,6 +28,8 @@ interface GameStore extends GameState {
   clickRadarCell: (id: string) => void;
   closeRadar: () => void;
   upgradeRadar: (id: keyof RadarUpgrades) => boolean;
+  completeIntro: () => void;
+  nextTutorialStep: () => void;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string, capacity: number }> = {
@@ -170,6 +172,9 @@ const INITIAL_STATE_DATA = {
   discoveredResources: ['metal' as ResourceType],
   radar: INITIAL_RADAR_STATE,
   energyLevel: 100, // 0-100 for Tier 4
+  hasSeenIntro: false,
+  tutorialStep: 0,
+  corporateDebt: 999_999_999_999,
 };
 
 export const useGameStore = create<GameStore>()(
@@ -332,7 +337,7 @@ export const useGameStore = create<GameStore>()(
         const t = (translations as any)[language];
         
         // Tier 5 Bonus: 2.0x time multiplier
-        const effectiveSeconds = currentSectorId === 'accretion_disk' ? seconds * 2 : seconds;
+        const effectiveSeconds = currentSectorId === 'kuiper_belt' ? seconds * 2 : seconds;
 
         // Calculate offline radar energy recharge
         let newEnergy = radar.energy;
@@ -452,7 +457,7 @@ export const useGameStore = create<GameStore>()(
 
       exitToMenu: () => set({ isGameActive: false }),
 
-      resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
+      resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now(), hasSeenIntro: false, tutorialStep: 0 }),
 
       replenishEnergy: () => {
         if (get().currentSectorId !== 'kuiper_belt') return;
@@ -645,11 +650,37 @@ export const useGameStore = create<GameStore>()(
         return false;
       },
 
+      completeIntro: () => set({ hasSeenIntro: true, tutorialStep: 1 }),
+
+      nextTutorialStep: () => set((state) => ({ tutorialStep: state.tutorialStep + 1 })),
+
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
-          const { currentSectorId } = state;
+          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources } = state;
           
+          // --- Tutorial Progress Logic ---
+          let newTutorialStep = tutorialStep;
+          if (tutorialStep === 1) {
+            // Wait for some manual mining (any resources in storage)
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= 10) newTutorialStep = 2;
+          } else if (tutorialStep === 2) {
+            // Wait for storage to be full enough to send transport (or auto-send)
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= storage.capacity * 0.2 && credits > 0) newTutorialStep = 3;
+          } else if (tutorialStep === 3) {
+            // Wait for drone purchase
+            if (drones.length > 1) newTutorialStep = 4;
+          } else if (tutorialStep === 4) {
+            // Wait for Ice discovery
+            if (discoveredResources.includes('ice')) newTutorialStep = 5;
+          } else if (tutorialStep === 5) {
+            // Wait for 5000 CR
+            if (credits >= 5000) newTutorialStep = 6;
+          }
+          // -------------------------------
+
           // --- Tier 4: Energy Logic ---
           let newEnergyLevel = state.energyLevel;
           if (currentSectorId === 'kuiper_belt') {
@@ -792,6 +823,7 @@ export const useGameStore = create<GameStore>()(
             asteroids: newAsteroids,
             radar: newRadar,
             energyLevel: newEnergyLevel,
+            tutorialStep: newTutorialStep,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };
@@ -900,6 +932,9 @@ export const useGameStore = create<GameStore>()(
         currentSectorId: state.currentSectorId,
         discoveredResources: state.discoveredResources,
         radar: state.radar,
+        hasSeenIntro: state.hasSeenIntro,
+        tutorialStep: state.tutorialStep,
+        corporateDebt: state.corporateDebt,
       }),
     }
   )
