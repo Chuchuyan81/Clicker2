@@ -51,7 +51,7 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language } = useGameStore();
+  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language, isWarping, currentSectorId } = useGameStore();
   const boostActive = boostEndTime > Date.now();
   const t_ui = (translations as any)[language].ui;
   const t_res = (translations as any)[language].resources;
@@ -160,21 +160,84 @@ const CentralScene: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative flex-1 w-full bg-space-950 overflow-hidden flex items-center justify-center border-y border-space-700 touch-none"
+      className={`relative flex-1 w-full overflow-hidden flex items-center justify-center border-y border-space-700 touch-none transition-colors duration-1000
+        ${currentSectorId === 'mars_orbit' ? 'bg-[#0a0202]' : 'bg-space-950'}
+        ${isWarping ? 'animate-shake' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* 1. Background Layer: Starfield */}
+      <div className="absolute inset-0 z-0">
+        <Starfield />
+      </div>
+
+      {/* Sector Specific Tint Overlay */}
+      {currentSectorId === 'mars_orbit' && (
+        <div className="absolute inset-0 z-5 bg-red-950/10 pointer-events-none" />
+      )}
+
+      {/* 2. Planet Layer: Mars (Fixed) */}
+      {currentSectorId === 'mars_orbit' && !isWarping && (
+        <>
+          {/* Sun / Lens Flare */}
+          <div className="absolute top-[15%] right-[20%] z-10 pointer-events-none">
+            <div className="relative">
+              {/* Core Sun */}
+              <div className="w-16 h-16 bg-white rounded-full blur-sm shadow-[0_0_50px_#fff,0_0_100px_#fff]" />
+              {/* Horizontal Flare */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent blur-[1px]" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[2px] bg-gradient-to-r from-transparent via-white/60 to-transparent blur-[2px]" />
+              {/* Secondary Glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white/5 rounded-full blur-3xl scale-[3]" />
+            </div>
+          </div>
+
+          {/* Mars Disk (Huge arc at bottom) */}
+          <div className="absolute bottom-[-920px] left-1/2 -translate-x-1/2 w-[2400px] h-[1200px] pointer-events-none z-20">
+            {/* Atmosphere Limb Glow (Outer Bloom) */}
+            <div className="absolute inset-0 rounded-[50%] shadow-[0_-20px_50px_rgba(255,150,100,0.15)] bg-gradient-to-b from-[#ff9664]/10 to-transparent" />
+            
+            {/* Main Planet Body */}
+            <div className="absolute inset-[2px] rounded-[50%] overflow-hidden bg-[#8b2f1a] shadow-[inset_0_40px_100px_rgba(0,0,0,0.9)]">
+              {/* Surface Texture from provided photo */}
+              <div 
+                className="absolute inset-0 opacity-100 bg-cover bg-center mix-blend-normal"
+                style={{ 
+                  backgroundImage: 'url("./mars_texture.png")',
+                  backgroundPosition: '50% 10%', // Show more of the northern part as requested
+                  transform: 'scale(1.2) translateY(-10%)',
+                }} 
+              />
+              
+              {/* Lighting Overlays for realism */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/95" />
+              <div className="absolute inset-0 shadow-[inset_0_80px_150px_rgba(255,150,100,0.15),inset_0_-40px_100px_rgba(0,0,0,1)]" />
+              
+              {/* Inner Atmospheric Rim (The bright line) */}
+              <div className="absolute inset-0 rounded-[50%] shadow-[inset_0_15px_30px_rgba(255,200,150,0.1)]" />
+              
+              {/* Bright spot from Sun */}
+              <div className="absolute top-0 right-[25%] w-[40%] h-[30%] bg-white/5 blur-[100px] rounded-full" />
+            </div>
+
+            {/* Sharp atmosphere line (Very subtle) */}
+            <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#ffccaa]/30 to-transparent blur-[0.5px]" />
+          </div>
+        </>
+      )}
+      
+      {/* 3. Game Objects Layer (Zoomable/Pannable) */}
       <div 
-        className="relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform"
+        className="relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform z-30"
         style={{ 
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
           cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
         }}
       >
-        <Starfield />
+        {/* We don't render Starfield here anymore, it's moved to background */}
         
         {/* Clickable Asteroids */}
         {asteroids.map(asteroid => {
