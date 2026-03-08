@@ -20,9 +20,9 @@ const AITerminalNotification: React.FC = () => {
       setIsVisible(true);
       setDisplayedText(""); // Reset text for typewriter effect
       
-      // Auto-hide after 10 seconds for non-warning messages
+      // Auto-hide after 60 seconds for non-warning messages
       if (latestFlavorLog.type === 'CORP') {
-        const timer = setTimeout(() => setIsVisible(false), 10000);
+        const timer = setTimeout(() => setIsVisible(false), 60000);
         return () => clearTimeout(timer);
       }
     }

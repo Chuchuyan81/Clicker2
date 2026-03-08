@@ -104,6 +104,8 @@ export interface GameState {
   tutorialStep: number;
   corporateDebt: number;
   gameLogs: LogEntry[];
+  manualClicks: number;
+  lastReadLogId: string | null;
 }
 
 export type LogType = 'INFO' | 'WARNING' | 'CORP';

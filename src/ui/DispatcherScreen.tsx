@@ -18,10 +18,17 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
     completeIntro, 
     language,
     exitToMenu,
-    corporateDebt
+    corporateDebt,
+    markLogsAsRead,
   } = useGameStore();
 
   const [view, setView] = useState<'boot' | 'terminal'>(hasSeenIntro ? 'terminal' : 'boot');
+  
+  useEffect(() => {
+    if (isOpen && view === 'terminal') {
+      markLogsAsRead();
+    }
+  }, [isOpen, view, markLogsAsRead]);
   const [bootLines, setBootLines] = useState<string[]>([]);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [currentCharIndex, setCurrentCharIndex] = useState(0);

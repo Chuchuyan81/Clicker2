@@ -34,6 +34,7 @@ interface GameStore extends GameState {
   nextTutorialStep: () => void;
   addLog: (text: string, type?: LogType) => void;
   reduceDebt: (amount: number) => void;
+  markLogsAsRead: () => void;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string, capacity: number }> = {
@@ -180,6 +181,8 @@ const INITIAL_STATE_DATA = {
   tutorialStep: 0,
   corporateDebt: 999_999_999_999,
   gameLogs: [],
+  manualClicks: 0,
+  lastReadLogId: null,
   _hasHydrated: false,
 };
 
@@ -194,6 +197,10 @@ export const useGameStore = create<GameStore>()(
 
       reduceDebt: (amount) => set((state) => ({
         corporateDebt: Math.max(0, state.corporateDebt - amount)
+      })),
+
+      markLogsAsRead: () => set((state) => ({
+        lastReadLogId: state.gameLogs.length > 0 ? state.gameLogs[0].id : state.lastReadLogId
       })),
 
       addLog: (text, type = 'INFO') => set((state) => ({
@@ -472,6 +479,7 @@ export const useGameStore = create<GameStore>()(
 
         if (added) {
           set((state) => ({
+            manualClicks: state.manualClicks + 1,
             asteroids: isLastHit 
               ? state.asteroids.filter(a => a.id !== id)
               : state.asteroids.map(a => a.id === id 
@@ -714,11 +722,10 @@ export const useGameStore = create<GameStore>()(
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
-          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt } = state;
+          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt, manualClicks } = state;
           
-          // --- Corporate Debt Interest (0.001% per minute) ---
-          const interestRatePerSec = 0.00001 / 60;
-          const newDebt = corporateDebt > 0 ? corporateDebt + (corporateDebt * interestRatePerSec * (deltaTime / 1000)) : 0;
+          // --- Corporate Debt Interest (Disabled) ---
+          const newDebt = corporateDebt;
 
           // --- Tier 4: Energy Logic ---
           let newEnergyLevel = state.energyLevel;
@@ -745,7 +752,7 @@ export const useGameStore = create<GameStore>()(
 
           if (tutorialStep === 1) {
             const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
-            if (totalStored >= 10) { newTutorialStep = 2; logsToPush.push(trans.tutorial.step2); }
+            if (totalStored >= 10 && manualClicks >= 1) { newTutorialStep = 2; logsToPush.push(trans.tutorial.step2); }
           } else if (tutorialStep === 2) {
             const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
             if (totalStored >= storage.capacity * 0.2 && credits > 0) { newTutorialStep = 3; logsToPush.push(trans.tutorial.step3); }
@@ -754,7 +761,7 @@ export const useGameStore = create<GameStore>()(
           } else if (tutorialStep === 4) {
             if (discoveredResources.includes('ice')) { newTutorialStep = 5; logsToPush.push(trans.tutorial.step5); }
           } else if (tutorialStep === 5) {
-            if (credits >= 5000) { newTutorialStep = 6; logsToPush.push(trans.tutorial.step6); }
+            if (credits >= 15000) { newTutorialStep = 6; logsToPush.push(trans.tutorial.step6); }
           }
 
           let currentLogs = state.gameLogs;
@@ -1047,6 +1054,8 @@ export const useGameStore = create<GameStore>()(
         tutorialStep: state.tutorialStep,
         corporateDebt: state.corporateDebt,
         gameLogs: state.gameLogs || [],
+        manualClicks: state.manualClicks || 0,
+        lastReadLogId: state.lastReadLogId || null,
       }),
       onRehydrateStorage: (state) => {
         return (rehydratedState: any, error) => {

@@ -22,7 +22,7 @@ const App: React.FC = () => {
     credits, drones, storage, transport, startTransport, activateMiningBurst, 
     boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu,
     radar, startRadarScan, isWarping, currentSectorId,
-    hasSeenIntro, tutorialStep, _hasHydrated
+    hasSeenIntro, tutorialStep, _hasHydrated, gameLogs, lastReadLogId, markLogsAsRead, energyLevel
   } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,6 +62,9 @@ const App: React.FC = () => {
 
   const unlocked = credits >= 100 || drones.length > 1;
 
+  const latestLog = gameLogs.length > 0 ? gameLogs[0] : null;
+  const hasNewImportantLog = latestLog && latestLog.id !== lastReadLogId && (latestLog.type === 'CORP' || latestLog.type === 'WARNING');
+
   if (!_hasHydrated) {
     return <div className="h-screen w-screen bg-black flex items-center justify-center font-mono text-[#00FF41]">INITIALIZING_SYSTEM...</div>;
   }
@@ -78,11 +81,17 @@ const App: React.FC = () => {
         {/* Left Side: Terminal & Credits */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <button 
-            onClick={() => setIsDispatcherOpen(true)}
+            onClick={() => {
+              setIsDispatcherOpen(true);
+              markLogsAsRead();
+            }}
             className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group relative"
             title={t.ui.terminal}
           >
             <Terminal size={18} className="text-[#00FF41] group-hover:scale-110 transition-transform" />
+            {hasNewImportantLog && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-black z-10" />
+            )}
             <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#00FF41] rounded-full animate-pulse shadow-[0_0_5px_rgba(0,255,65,0.8)]" />
           </button>
           
@@ -131,6 +140,19 @@ const App: React.FC = () => {
               })}
             </button>
           </div>
+
+          {/* Energy Status (Tier 4 Kuiper Belt only) */}
+          {currentSectorId === 'kuiper_belt' && (
+            <div className="flex flex-col items-center gap-1 min-w-[50px] md:min-w-[80px] shrink-0">
+              <div className="text-[8px] md:text-[10px] uppercase font-orbitron text-gray-400 flex items-center gap-1">
+                <Zap size={10} className={energyLevel < 20 ? "text-red-500 animate-pulse" : "text-neon-blue"} /> 
+                <span className={energyLevel < 20 ? "text-red-500" : ""}>ENG</span>
+              </div>
+              <div className={`text-[10px] md:text-xs font-mono font-bold ${energyLevel < 20 ? "text-red-500 animate-pulse" : "text-neon-blue"}`}>
+                {Math.floor(energyLevel)}%
+              </div>
+            </div>
+          )}
 
           {/* Transport Status - Simple Badge */}
           <div className="flex flex-col items-center gap-1 min-w-[65px] md:min-w-[100px] shrink-0">
