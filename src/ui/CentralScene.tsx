@@ -579,7 +579,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <Zap size={12} className="text-neon-gold" />
                       <span className="text-sm font-mono text-neon-gold">
-                        {RESOURCE_CONFIG[discoveryPopup].basePrice} CR
+                        {RESOURCE_CONFIG[discoveryPopup]?.basePrice || 0} CR
                       </span>
                     </div>
                   </div>
@@ -588,7 +588,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <MousePointer2 size={12} className="text-gray-300" />
                       <span className="text-sm font-mono text-gray-300">
-                        {RESOURCE_CONFIG[discoveryPopup].maxHits} {t_ui.hits_unit}
+                        {RESOURCE_CONFIG[discoveryPopup]?.maxHits || 0} {t_ui.hits_unit}
                       </span>
                     </div>
                   </div>

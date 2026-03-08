@@ -394,12 +394,14 @@ export const useGameStore = create<GameStore>()(
         const currentTotal = Object.values(newStorageCurrent).reduce((a, b) => a + b, 0);
         
         if (automationEnabled && currentTotal > capacity * 0.8) {
-          // Sell everything
-          Object.entries(newStorageCurrent).forEach(([type, amount]) => {
-            const resType = type as ResourceType;
+        // Sell everything
+        Object.entries(newStorageCurrent).forEach(([type, amount]) => {
+          const resType = type as ResourceType;
+          if (resources[resType]) {
             earnedCredits += amount * resources[resType].basePrice * multipliers.price;
-            newStorageCurrent[resType] = 0;
-          });
+          }
+          newStorageCurrent[resType] = 0;
+        });
         } else if (currentTotal > capacity) {
           // Cap storage proportionally
           const factor = capacity / currentTotal;
@@ -600,7 +602,8 @@ export const useGameStore = create<GameStore>()(
             }
             
             // Штрафная продажа (75% цены)
-            const resourcePrice = resources[resType].basePrice * multipliers.price;
+            const resource = resources[resType];
+            const resourcePrice = resource ? (resource.basePrice * multipliers.price) : 0;
             const creditsEarned = Math.floor(overflowVolume * resourcePrice * 0.75);
             
             addCredits(creditsEarned);
@@ -876,7 +879,9 @@ export const useGameStore = create<GameStore>()(
         (Object.keys(newStorageCurrent) as ResourceType[]).forEach((resId) => {
           const amount = newStorageCurrent[resId];
           const resource = resources[resId];
-          totalEarned += amount * resource.basePrice * multipliers.price;
+          if (resource) {
+            totalEarned += amount * resource.basePrice * multipliers.price;
+          }
           newStorageCurrent[resId] = 0;
         });
 
@@ -986,8 +991,23 @@ export const useGameStore = create<GameStore>()(
         gameLogs: state.gameLogs || [],
       }),
       onRehydrateStorage: (state) => {
-        return (rehydratedState, error) => {
+        return (rehydratedState: any, error) => {
           if (rehydratedState) {
+            // Data Migration: Remove resources from storage that no longer exist
+            if (rehydratedState.storage?.current) {
+              const validResources = Object.keys(RESOURCE_CONFIG);
+              Object.keys(rehydratedState.storage.current).forEach(key => {
+                if (!validResources.includes(key)) {
+                  delete rehydratedState.storage.current[key];
+                }
+              });
+            }
+            // Ensure discoveredResources only contains valid types
+            if (rehydratedState.discoveredResources) {
+              rehydratedState.discoveredResources = rehydratedState.discoveredResources.filter(
+                (res: string) => Object.keys(RESOURCE_CONFIG).includes(res)
+              );
+            }
             rehydratedState.setHasHydrated(true);
           }
         };
