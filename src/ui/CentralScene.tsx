@@ -76,6 +76,15 @@ const CentralScene: React.FC = () => {
 
   const [discoveryPopup, setDiscoveryPopup] = useState<ResourceType | null>(null);
   const lastDiscoveredCount = useRef(discoveredResources.length);
+  const lastSectorId = useRef(currentSectorId);
+
+  // Reset camera on warp
+  useEffect(() => {
+    if (isWarping) {
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+    }
+  }, [isWarping]);
 
   // Effect to catch new discoveries and show popup
   useEffect(() => {

@@ -129,6 +129,7 @@ export const translations = {
       upgrade_success: "{name} улучшен до уровня {level}!",
       offline_income: "Пока вас не было, дроны добыли {resources} ресурсов и заработали {credits} CR!",
       radar_hazard: "ОПАСНОСТЬ! -3 импульса",
+      warp_success: "Варп-прыжок завершен. Добро пожаловать в {name}!",
     },
     menu: {
       continue: "Продолжить",
@@ -268,6 +269,7 @@ export const translations = {
       upgrade_success: "{name} Upgraded to Lv.{level}!",
       offline_income: "While you were away, drones mined {resources} resources and earned {credits} CR!",
       radar_hazard: "HAZARD! -3 Pulses",
+      warp_success: "Warp jump complete. Welcome to {name}!",
     },
     menu: {
       continue: "Continue",

@@ -1,8 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
-import { X, Map as MapIcon, Database, Zap, Navigation2 } from 'lucide-react';
-import { SECTORS_CONFIG } from '../config/sectors';
+import { X, Database, Zap, Navigation2, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { SECTORS_CONFIG, SectorId } from '../config/sectors';
 import { translations } from '../translations';
 
 interface StarmapModalProps {
@@ -14,187 +14,262 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
   const { currentSectorId, credits, warpToSector, language, upgrades } = useGameStore();
   const t = (translations as any)[language];
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 overflow-y-auto">
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-slate-950 border-2 border-neon-blue rounded-2xl w-full max-w-4xl overflow-hidden shadow-[0_0_50px_rgba(0,242,255,0.3)] flex flex-col max-h-[95vh] text-blue-100"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-blue-900/50 bg-blue-950/40">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-2xl font-orbitron neon-text-blue uppercase tracking-widest flex items-center gap-3">
-              <Navigation2 className="text-neon-blue" size={28} />
-              НАВИГАЦИЯ: СИСТЕМА EXO-MINE
-            </h2>
-            <p className="text-[10px] text-blue-400 font-mono tracking-widest opacity-70">GALAXY NAVIGATOR v4.0 // ACTIVE_SECTOR: {currentSectorId.toUpperCase()}</p>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 overflow-hidden">
+          {/* Backdrop Blur Decoration */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-neon-blue/10 blur-[120px] rounded-full animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
           </div>
-          <button onClick={onClose} className="text-blue-400 hover:text-white transition-all cursor-pointer p-2 hover:bg-blue-900/30 rounded-full border border-blue-900/30">
-            <X size={28} />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="p-8 overflow-y-auto grid lg:grid-cols-2 gap-8 bg-blue-950/10">
-          {Object.values(SECTORS_CONFIG).map((sector) => {
-            const isCurrent = sector.id === currentSectorId;
-            const currentSector = SECTORS_CONFIG[currentSectorId];
-            
-            // Requirements Check
-            const canAfford = credits >= sector.unlockCost;
-            const refineryOk = upgrades.refinery.level >= currentSector.maxUpgrades.refinery;
-            const storageOk = upgrades.cargo_bay.level >= currentSector.maxUpgrades.storage;
-            const hangarOk = upgrades.hangar.level >= currentSector.maxUpgrades.hangar;
-            
-            const allMet = isCurrent || (canAfford && refineryOk && storageOk && hangarOk);
-            
-            return (
-              <div 
-                key={sector.id} 
-                className={`relative p-6 rounded-2xl border-2 transition-all flex flex-col gap-6 group
-                  ${isCurrent ? 'border-green-500/50 bg-green-500/5 shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 
-                    'border-blue-900/30 bg-blue-950/20 hover:border-neon-blue/40 shadow-inner'}`}
-              >
-                {/* Sector Header */}
-                <div className="flex justify-between items-start">
-                  <div className="flex flex-col gap-1">
-                    <h3 className={`text-xl font-orbitron uppercase tracking-widest ${isCurrent ? 'text-green-400' : 'text-neon-blue'}`}>
-                      {sector.name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest">
-                      <span className={isCurrent ? 'text-green-500/70' : 'text-blue-500/70'}>ID: {sector.id}</span>
-                      {isCurrent && <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-[8px] border border-green-500/30 animate-pulse">ТЕКУЩАЯ ПОЗИЦИЯ</span>}
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="bg-slate-950 border border-blue-500/30 rounded-3xl w-full max-w-5xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8),0_0_30px_rgba(59,130,246,0.1)] flex flex-col max-h-[90vh] text-blue-100 relative"
+          >
+            {/* Scanline Effect */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] pointer-events-none z-10" />
+
+            {/* Header */}
+            <div className="relative z-20 flex items-center justify-between px-10 py-8 border-b border-blue-500/20 bg-blue-950/20 backdrop-blur-md">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                    <Navigation2 className="text-neon-blue animate-pulse" size={32} />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-orbitron font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                      WARP DRIVE MENU
+                    </h2>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-blue-400 font-mono tracking-[0.3em] uppercase opacity-70">SYSTEM_STATUS: ONLINE</span>
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     </div>
                   </div>
-                  {!isCurrent && (
-                    <div className="bg-blue-900/20 p-2 rounded-lg border border-blue-800/30">
-                      <Zap size={20} className={canAfford ? 'text-neon-gold' : 'text-gray-600'} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Available Resources */}
-                <div className="space-y-3">
-                  <span className="text-[10px] text-blue-400 uppercase font-orbitron tracking-widest opacity-60">ДОСТУПНЫЕ РЕСУРСЫ</span>
-                  <div className="flex flex-wrap gap-2">
-                    {sector.resources.map(resId => (
-                      <div key={resId} className="flex items-center gap-2 px-3 py-1.5 bg-blue-900/20 rounded-lg border border-blue-800/20 group-hover:border-blue-700/40 transition-all">
-                        <Database size={12} className="text-blue-400" />
-                        <span className="text-[11px] text-blue-100/90 font-mono tracking-tight">{(t.resources as any)[resId] || resId}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Requirements Checklist (Only for other sectors) */}
-                {!isCurrent && (
-                  <div className="space-y-4 py-4 border-y border-blue-900/20">
-                    <span className="text-[10px] text-blue-400 uppercase font-orbitron tracking-widest opacity-60">ТРЕБОВАНИЯ К ПРЫЖКУ (GATES)</span>
-                    <div className="grid grid-cols-1 gap-2">
-                      <RequirementItem 
-                        label="Кредиты" 
-                        current={credits} 
-                        target={sector.unlockCost} 
-                        unit="CR" 
-                        isMet={canAfford} 
-                      />
-                      <RequirementItem 
-                        label="Завод" 
-                        current={upgrades.refinery.level} 
-                        target={currentSector.maxUpgrades.refinery} 
-                        unit="ур." 
-                        isMet={refineryOk} 
-                      />
-                      <RequirementItem 
-                        label="Грузовой отсек" 
-                        current={upgrades.cargo_bay.level} 
-                        target={currentSector.maxUpgrades.storage} 
-                        unit="ур." 
-                        isMet={storageOk} 
-                      />
-                      <RequirementItem 
-                        label="Ангар" 
-                        current={upgrades.hangar.level} 
-                        target={currentSector.maxUpgrades.hangar} 
-                        unit="ур." 
-                        isMet={hangarOk} 
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Area */}
-                <div className="mt-auto">
-                  {isCurrent ? (
-                    <div className="w-full text-center py-4 text-green-400 font-orbitron text-[10px] tracking-[0.3em] uppercase opacity-60">
-                      СИСТЕМА СТАБИЛИЗИРОВАНА
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        warpToSector(sector.id);
-                        onClose();
-                      }}
-                      disabled={!allMet}
-                      className={`w-full py-4 rounded-xl font-orbitron text-xs tracking-widest uppercase transition-all flex items-center justify-center gap-3 border
-                        ${allMet 
-                          ? 'bg-neon-blue/10 border-neon-blue/50 text-neon-blue hover:bg-neon-blue hover:text-black cursor-pointer shadow-[0_0_20px_rgba(0,242,255,0.2)]' 
-                          : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed grayscale'}`}
-                    >
-                      <Navigation2 size={16} className={allMet ? 'animate-pulse' : ''} />
-                      {t.ui.initiate_warp}
-                    </button>
-                  )}
-                </div>
-
-                {/* Visual Decoration */}
-                <div className="absolute -bottom-4 -right-4 opacity-[0.03] rotate-12 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-                  <MapIcon size={120} className={isCurrent ? 'text-green-500' : 'text-neon-blue'} />
                 </div>
               </div>
-            );
-          })}
-        </div>
+              
+              <div className="flex items-center gap-8">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-blue-400 font-orbitron tracking-widest uppercase opacity-50 mb-1">CURRENT_CREDITS</span>
+                  <div className="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20">
+                    <Zap size={16} className="text-neon-gold" />
+                    <span className="text-xl font-mono font-bold text-neon-gold tracking-tight">{credits.toLocaleString()} <span className="text-xs">CR</span></span>
+                  </div>
+                </div>
+                <button 
+                  onClick={onClose} 
+                  className="group relative p-3 text-blue-400 hover:text-white transition-all cursor-pointer rounded-xl border border-blue-500/20 hover:border-blue-500/50 hover:bg-blue-500/10"
+                >
+                  <X size={24} />
+                  <div className="absolute inset-0 rounded-xl bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors" />
+                </button>
+              </div>
+            </div>
 
-        {/* Footer */}
-        <div className="px-8 py-4 border-t border-blue-900/50 bg-blue-950/40 flex justify-between items-center">
-          <div className="text-[10px] text-blue-500 font-mono tracking-widest opacity-50 uppercase">
-            NAV_DATA_LINK_ESTABLISHED // SECURE_LINE
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] text-blue-400 uppercase opacity-70">БАЛАНС:</span>
-            <span className="text-neon-gold font-mono text-lg font-bold">{credits.toLocaleString()} CR</span>
-          </div>
+            {/* Sector Grid */}
+            <div className="relative z-20 p-10 overflow-y-auto custom-scrollbar flex-1 bg-gradient-to-b from-blue-950/10 to-transparent">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Object.values(SECTORS_CONFIG).map((sector, index) => (
+                  <SectorCard 
+                    key={sector.id}
+                    sector={sector}
+                    index={index}
+                    isCurrent={sector.id === currentSectorId}
+                    currentCredits={credits}
+                    currentUpgrades={upgrades}
+                    currentSectorConfig={SECTORS_CONFIG[currentSectorId]}
+                    onWarp={(id) => {
+                      warpToSector(id);
+                      onClose();
+                    }}
+                    t={t}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="relative z-20 px-10 py-4 border-t border-blue-500/20 bg-blue-950/30 flex justify-between items-center text-[10px] font-mono tracking-[0.2em] text-blue-400/60 uppercase">
+              <div className="flex items-center gap-6">
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> NAVIGATION_LINK: STABLE</span>
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> ENCRYPTION: AES-256</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="animate-pulse">LOCAL_TIME: {new Date().toLocaleTimeString()}</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
 
-interface RequirementItemProps {
-  label: string;
-  current: number;
-  target: number;
-  unit: string;
-  isMet: boolean;
+interface SectorCardProps {
+  sector: any;
+  index: number;
+  isCurrent: boolean;
+  currentCredits: number;
+  currentUpgrades: any;
+  currentSectorConfig: any;
+  onWarp: (id: SectorId) => void;
+  t: any;
 }
 
-const RequirementItem: React.FC<RequirementItemProps> = ({ label, current, target, unit, isMet }) => (
-  <div className="flex items-center justify-between text-[11px] font-mono px-3 py-2 bg-black/40 rounded-lg border border-blue-900/20">
-    <div className="flex items-center gap-3">
-      <div className={`w-4 h-4 rounded flex items-center justify-center border ${isMet ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-red-500/20 border-red-500/50 text-red-400'}`}>
-        {isMet ? '✓' : '✗'}
+const SectorCard: React.FC<SectorCardProps> = ({ 
+  sector, index, isCurrent, currentCredits, currentUpgrades, currentSectorConfig, onWarp, t 
+}) => {
+  // Requirements Check
+  const canAfford = currentCredits >= sector.unlockCost;
+  const refineryOk = currentUpgrades.refinery.level >= currentSectorConfig.maxUpgrades.refinery;
+  const storageOk = currentUpgrades.cargo_bay.level >= currentSectorConfig.maxUpgrades.storage;
+  const hangarOk = currentUpgrades.hangar.level >= currentSectorConfig.maxUpgrades.hangar;
+  
+  const isUnlocked = isCurrent || (canAfford && refineryOk && storageOk && hangarOk);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-500
+        ${isCurrent 
+          ? 'bg-green-500/5 border-green-500/40 shadow-[0_0_25px_rgba(34,197,94,0.1)]' 
+          : isUnlocked 
+            ? 'bg-blue-500/5 border-blue-500/20 hover:border-blue-500/50 hover:bg-blue-500/10 shadow-lg' 
+            : 'bg-black/40 border-white/5 grayscale-[0.8] opacity-60'}`}
+    >
+      {/* Background Icon Watermark */}
+      <div className="absolute top-4 right-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+        <Navigation2 size={120} />
       </div>
-      <span className="text-blue-300/70">{label}:</span>
-    </div>
+
+      {/* Header Info */}
+      <div className="relative z-10 mb-6">
+        <div className="flex justify-between items-start mb-1">
+          <h3 className={`text-xl font-orbitron font-bold tracking-widest uppercase ${isCurrent ? 'text-green-400' : 'text-white'}`}>
+            {sector.name}
+          </h3>
+          {isCurrent && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[8px] font-orbitron text-green-400 animate-pulse">
+              <CheckCircle2 size={10} />
+              YOU ARE HERE
+            </div>
+          )}
+          {!isCurrent && !isUnlocked && (
+            <div className="p-1.5 bg-red-500/10 border border-red-500/20 rounded text-red-400">
+              <Lock size={14} />
+            </div>
+          )}
+        </div>
+        <p className={`text-[10px] font-mono tracking-widest uppercase mb-4 ${isCurrent ? 'text-green-500/60' : 'text-blue-400/60'}`}>
+          {sector.subtitle}
+        </p>
+      </div>
+
+      {/* Resource List */}
+      <div className="relative z-10 mb-6">
+        <div className="text-[9px] font-orbitron text-blue-400/50 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+          <Database size={10} />
+          RESOURCES_DETECTED
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {sector.resources.map((resId: string) => (
+            <div key={resId} className="px-2.5 py-1 bg-white/5 border border-white/5 rounded-md text-[10px] font-mono text-blue-200/80 group-hover:border-blue-500/20 transition-colors">
+              {t.resources[resId]}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Gates / Requirements (Only if not current) */}
+      {!isCurrent && (
+        <div className="relative z-10 mb-8 p-4 bg-black/40 border border-white/5 rounded-xl space-y-3">
+          <div className="text-[9px] font-orbitron text-blue-400/50 uppercase tracking-[0.2em] mb-1">
+            GATE_REQUIREMENTS
+          </div>
+          
+          <RequirementLine 
+            icon={<Zap size={12} />}
+            label="CREDITS" 
+            current={currentCredits} 
+            target={sector.unlockCost} 
+            isMet={canAfford}
+          />
+          <RequirementLine 
+            label="REFINERY" 
+            current={currentUpgrades.refinery.level} 
+            target={currentSectorConfig.maxUpgrades.refinery} 
+            isMet={refineryOk}
+          />
+          <RequirementLine 
+            label="CARGO" 
+            current={currentUpgrades.cargo_bay.level} 
+            target={currentSectorConfig.maxUpgrades.storage} 
+            isMet={storageOk}
+          />
+          <RequirementLine 
+            label="HANGAR" 
+            current={currentUpgrades.hangar.level} 
+            target={currentSectorConfig.maxUpgrades.hangar} 
+            isMet={hangarOk}
+          />
+        </div>
+      )}
+
+      {/* Action Button */}
+      <div className="relative z-10 mt-auto">
+        {isCurrent ? (
+          <div className="w-full py-3.5 text-center text-[10px] font-orbitron tracking-[0.3em] text-green-500/40 border border-green-500/10 rounded-xl bg-green-500/5 uppercase">
+            STATIONARY_STABLE
+          </div>
+        ) : (
+          <button
+            onClick={() => isUnlocked && onWarp(sector.id)}
+            disabled={!isUnlocked}
+            className={`w-full py-4 rounded-xl font-orbitron text-[11px] font-black tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-3 group/btn
+              ${isUnlocked 
+                ? 'bg-blue-600/10 border border-blue-500/40 text-blue-400 hover:bg-blue-600 hover:text-white hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] cursor-pointer' 
+                : 'bg-white/5 border border-white/5 text-white/20 cursor-not-allowed'}`}
+          >
+            {isUnlocked ? (
+              <>
+                <Navigation2 size={14} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                INITIATE_WARP_JUMP
+              </>
+            ) : (
+              <>
+                <Lock size={14} />
+                SYSTEM_LOCKED
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+const RequirementLine: React.FC<{ icon?: React.ReactNode, label: string, current: number, target: number, isMet: boolean }> = ({ 
+  icon, label, current, target, isMet 
+}) => (
+  <div className="flex items-center justify-between font-mono">
     <div className="flex items-center gap-2">
-      <span className={isMet ? 'text-green-400' : 'text-red-400'}>{current.toLocaleString()}</span>
-      <span className="text-blue-500/50">/</span>
-      <span className="text-blue-100">{target.toLocaleString()}</span>
-      <span className="text-blue-500/50 text-[9px]">{unit}</span>
+      <div className={`text-[10px] uppercase ${isMet ? 'text-blue-400/70' : 'text-red-400/70'}`}>
+        {label}:
+      </div>
+    </div>
+    <div className="flex items-center gap-2 text-[10px]">
+      <span className={isMet ? 'text-green-400 font-bold' : 'text-red-500'}>{current >= 1000 ? (current/1000).toFixed(1) + 'k' : current}</span>
+      <span className="text-white/20">/</span>
+      <span className="text-white/80">{target >= 1000 ? (target/1000).toFixed(1) + 'k' : target}</span>
+      <div className={`ml-1 ${isMet ? 'text-green-400' : 'text-red-500/50'}`}>
+        {isMet ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
+      </div>
     </div>
   </div>
 );

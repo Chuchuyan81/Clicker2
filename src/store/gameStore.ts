@@ -496,10 +496,12 @@ export const useGameStore = create<GameStore>()(
           }
         }));
 
-        // End warping after 3 seconds
+        // End warping after 1 second
         setTimeout(() => {
           set({ isWarping: false });
-        }, 3000);
+          const t = (translations as any)[get().language];
+          get().addNotification('info', t.notifications.warp_success.replace('{name}', targetSector.name));
+        }, 1000);
       },
 
       startRadarScan: () => {
