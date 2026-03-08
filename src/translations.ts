@@ -47,6 +47,7 @@ export const translations = {
       current_location: "ТЕКУЩАЯ ПОЗИЦИЯ",
       initiate_warp: "ИНИЦИИРОВАТЬ ВАРП",
       cost: "Цена",
+      terminal: "Терминал",
       available_resources: "Ресурсы",
       energy_level: "Уровень энергии",
       energy_low: "КРИТИЧЕСКИЙ ДЕФИЦИТ ЭНЕРГИИ",
@@ -174,6 +175,16 @@ export const translations = {
         saturn_rings: "Кольца Сатурна",
         kuiper_belt: "Пояс Койпера",
       }
+    },
+    dispatcher: {
+      title: "Диспетчерская EXO-MINE",
+      debt_label: "Корпоративный долг",
+      event_log: "Консоль событий",
+      waiting_data: "Ожидание входящих данных...",
+      nav_starmap: "Карта Системы",
+      nav_base: "На базу",
+      logout: "Выход из терминала",
+      boot_accept: "[ ПРИНЯТЬ УСЛОВИЯ ]",
     }
   },
   en: {
@@ -224,6 +235,7 @@ export const translations = {
       current_location: "CURRENT POSITION",
       initiate_warp: "INITIATE WARP",
       cost: "Cost",
+      terminal: "Terminal",
       available_resources: "Resources",
       energy_level: "Energy Level",
       energy_low: "CRITICAL ENERGY DEFICIT",
@@ -351,6 +363,16 @@ export const translations = {
         saturn_rings: "Saturn Rings",
         kuiper_belt: "Kuiper Belt",
       }
+    },
+    dispatcher: {
+      title: "EXO-MINE Dispatcher",
+      debt_label: "Corporate Debt",
+      event_log: "Event Log",
+      waiting_data: "Waiting for incoming data...",
+      nav_starmap: "System Map",
+      nav_base: "Back to Base",
+      logout: "Exit Terminal",
+      boot_accept: "[ ACCEPT TERMS ]",
     }
   }
 };

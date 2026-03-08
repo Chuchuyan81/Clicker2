@@ -103,6 +103,16 @@ export interface GameState {
   hasSeenIntro: boolean;
   tutorialStep: number;
   corporateDebt: number;
+  gameLogs: LogEntry[];
+}
+
+export type LogType = 'INFO' | 'WARNING' | 'CORP';
+
+export interface LogEntry {
+  id: string;
+  type: LogType;
+  text: string;
+  timestamp: number;
 }
 
 export interface ClickableAsteroid {

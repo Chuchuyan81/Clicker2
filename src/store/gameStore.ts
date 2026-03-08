@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades } from '../types';
+import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades, LogEntry, LogType } from '../types';
 import { translations, Language } from '../translations';
 import { generateRadarGrid, revealEmptyCells } from '../utils/radarUtils';
 import { SECTORS_CONFIG, RESOURCE_CONFIG, SectorId } from '../config/sectors';
@@ -30,6 +30,8 @@ interface GameStore extends GameState {
   upgradeRadar: (id: keyof RadarUpgrades) => boolean;
   completeIntro: () => void;
   nextTutorialStep: () => void;
+  addLog: (text: string, type?: LogType) => void;
+  reduceDebt: (amount: number) => void;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string, capacity: number }> = {
@@ -175,6 +177,7 @@ const INITIAL_STATE_DATA = {
   hasSeenIntro: false,
   tutorialStep: 0,
   corporateDebt: 999_999_999_999,
+  gameLogs: [],
 };
 
 export const useGameStore = create<GameStore>()(
@@ -183,6 +186,22 @@ export const useGameStore = create<GameStore>()(
       ...INITIAL_STATE_DATA,
 
       addCredits: (amount) => set((state) => ({ credits: state.credits + amount })),
+
+      reduceDebt: (amount) => set((state) => ({
+        corporateDebt: Math.max(0, state.corporateDebt - amount)
+      })),
+
+      addLog: (text, type = 'INFO') => set((state) => ({
+        gameLogs: [
+          {
+            id: Math.random().toString(36).substring(2, 9),
+            type,
+            text,
+            timestamp: Date.now()
+          },
+          ...state.gameLogs.slice(0, 49) // Keep last 50
+        ]
+      })),
 
       addNotification: (type, value) => set((state) => ({
         notifications: [
@@ -517,6 +536,8 @@ export const useGameStore = create<GameStore>()(
         const grid = generateRadarGrid(radar.upgrades, currentSectorId);
         const clicksRemaining = 10 + (radar.upgrades.battery * 2);
 
+        get().addLog('Сектор просканирован. Обнаружены плотные залежи.', 'INFO');
+
         set((state) => ({
           radar: {
             ...state.radar,
@@ -591,6 +612,7 @@ export const useGameStore = create<GameStore>()(
             newDiscoveredResources.push(resType);
             const t = (translations as any)[get().language];
             get().addNotification('info', t.ui.resource_identified || 'NEW RESOURCE!');
+            get().addLog(`Обнаружен новый ресурс: ${t.resources[resType]}.`, 'INFO');
           }
         } else if (targetCell.type === 'empty' && targetCell.adjacentCount === 0) {
           const size = Math.sqrt(radar.grid.length);
@@ -659,6 +681,15 @@ export const useGameStore = create<GameStore>()(
           const now = Date.now();
           const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources } = state;
           
+          // --- Warning Logs ---
+          const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+          if (totalStored > storage.capacity * 0.9 && !state.gameLogs.some(l => l.text.includes("Склад заполнен") && now - l.timestamp < 30000)) {
+            get().addLog('ВНИМАНИЕ: Склад заполнен на 90%!', 'WARNING');
+          }
+          if (newEnergyLevel < 20 && currentSectorId === 'kuiper_belt' && !state.gameLogs.some(l => l.text.includes("Энергия на исходе") && now - l.timestamp < 30000)) {
+            get().addLog('ВНИМАНИЕ: Энергия на исходе. Срочно зарядите базу!', 'WARNING');
+          }
+
           // --- Tutorial Progress Logic ---
           let newTutorialStep = tutorialStep;
           if (tutorialStep === 1) {
@@ -846,7 +877,19 @@ export const useGameStore = create<GameStore>()(
 
         if (totalEarned > 0) {
           addCredits(totalEarned);
+          get().reduceDebt(totalEarned);
           get().addNotification('sale', `+${Math.floor(totalEarned)} CR`);
+          get().addLog(`Транспорт отправлен. Доход: ${Math.floor(totalEarned)} CR.`, 'INFO');
+          
+          if (Math.random() < 0.1) {
+            const corpMsgs = [
+              "Твое дыхание стоит нам 0.02 CR в минуту. Работай быстрее.",
+              "Корпорация напоминает: сон — это роскошь, которую ты пока не заслужил.",
+              "Твое корыто все еще в долгах. Не расслабляйся.",
+              "Каждый клик приближает тебя к свободе (но это не точно)."
+            ];
+            get().addLog(corpMsgs[Math.floor(Math.random() * corpMsgs.length)], 'CORP');
+          }
           
           set((state) => ({
             storage: { ...state.storage, current: newStorageCurrent },

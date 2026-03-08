@@ -6,9 +6,9 @@ import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
 import RadarOverlay from './ui/RadarOverlay';
 import StarmapModal from './ui/StarmapModal';
-import IntroTerminal from './ui/IntroTerminal';
+import DispatcherScreen from './ui/DispatcherScreen';
 import TutorialManager from './ui/TutorialManager';
-import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database, Map } from 'lucide-react';
+import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database, Map, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
 
@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [starmapOpen, setStarmapOpen] = useState(false);
+  const [isDispatcherOpen, setIsDispatcherOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive' | 'radar'>('upgrades');
 
   const t = (translations as any)[language];
@@ -86,6 +87,14 @@ const App: React.FC = () => {
           >
             <Map size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
             <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-neon-blue rounded-full animate-pulse shadow-[0_0_5px_rgba(0,242,255,0.8)]" />
+          </button>
+
+          <button 
+            onClick={() => setIsDispatcherOpen(true)}
+            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group"
+            title={t.ui.terminal}
+          >
+            <Terminal size={18} className="text-[#00FF41] group-hover:scale-110 transition-transform" />
           </button>
           
           <div className="flex items-center gap-2 ml-1">
@@ -236,9 +245,13 @@ const App: React.FC = () => {
         onClose={() => setStarmapOpen(false)}
       />
       <RadarOverlay />
+      <DispatcherScreen 
+        isOpen={isDispatcherOpen} 
+        onClose={() => setIsDispatcherOpen(false)}
+        onOpenStarmap={() => { setIsDispatcherOpen(false); setStarmapOpen(true); }}
+      />
       
-      {/* Onboarding & Tutorial */}
-      {!hasSeenIntro && <IntroTerminal />}
+      {/* Tutorial */}
       {hasSeenIntro && tutorialStep > 0 && <TutorialManager />}
 
       {/* Warp Flash Effect */}
