@@ -185,6 +185,14 @@ export const translations = {
       nav_base: "На базу",
       logout: "Выход из терминала",
       boot_accept: "[ ПРИНЯТЬ УСЛОВИЯ ]",
+    },
+    tutorial: {
+      step1: "Нажмите на пролетающий камень. Желательно до того, как мы обанкротимся.",
+      step2: "Склад наполняется. Когда наберется 20%, автоматика разрешит вызвать баржу для продажи.",
+      step3: "Отлично. На эти гроши вы можете купить сломанного дрона в Улучшениях. Сделайте это.",
+      step4: "Дроны тупые. Они не видят ценные породы без разведки. Откройте Радар и найдите Космический Лед.",
+      step5: "Нам нужно больше прибыли. Копите на лицензию следующего сектора.",
+      step6: "У вас появились деньги. Не привыкайте. Откройте Карту Системы — нам нужно купить лицензию на Орбиту Марса.",
     }
   },
   en: {
@@ -373,6 +381,14 @@ export const translations = {
       nav_base: "Back to Base",
       logout: "Exit Terminal",
       boot_accept: "[ ACCEPT TERMS ]",
+    },
+    tutorial: {
+      step1: "Click on a flying rock. Preferably before we go bankrupt.",
+      step2: "Storage is filling up. Once it reaches 20%, the system will allow you to call a barge to sell.",
+      step3: "Excellent. With these pennies, you can buy a broken drone in Upgrades. Do it.",
+      step4: "Drones are dumb. They don't see valuable ores without scouting. Open the Radar and find some Space Ice.",
+      step5: "We need more profit. Save up for the next sector license.",
+      step6: "You've got some money. Don't get used to it. Open the Starmap — we need to buy a license for Mars Orbit.",
     }
   }
 };

@@ -8,7 +8,6 @@ import RadarOverlay from './ui/RadarOverlay';
 import StarmapModal from './ui/StarmapModal';
 import DispatcherScreen from './ui/DispatcherScreen';
 import AITerminalNotification from './ui/AITerminalNotification';
-import TutorialManager from './ui/TutorialManager';
 import { Wallet, Package, Rocket, Zap, Sliders, Lock, Database, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
@@ -241,9 +240,6 @@ const App: React.FC = () => {
         onOpenStarmap={() => { setIsDispatcherOpen(false); setStarmapOpen(true); }}
       />
       
-      {/* Tutorial */}
-      {hasSeenIntro && tutorialStep > 0 && <TutorialManager />}
-
       <AITerminalNotification />
 
       {/* Warp Flash Effect */}

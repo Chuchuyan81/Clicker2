@@ -680,9 +680,23 @@ export const useGameStore = create<GameStore>()(
         return false;
       },
 
-      completeIntro: () => set({ hasSeenIntro: true, tutorialStep: 1 }),
+      completeIntro: () => {
+        const t = (translations as any)[get().language];
+        set({ hasSeenIntro: true, tutorialStep: 1 });
+        get().addLog(t.tutorial.step1, 'CORP');
+      },
 
-      nextTutorialStep: () => set((state) => ({ tutorialStep: state.tutorialStep + 1 })),
+      nextTutorialStep: () => set((state) => {
+        const newStep = state.tutorialStep + 1;
+        const t = (translations as any)[state.language];
+        const tutorialMsg = (t.tutorial as any)[`step${newStep}`];
+        
+        if (tutorialMsg) {
+          get().addLog(tutorialMsg, 'CORP');
+        }
+        
+        return { tutorialStep: newStep };
+      }),
 
       updateDrones: (deltaTime) => {
         set((state) => {
@@ -709,23 +723,32 @@ export const useGameStore = create<GameStore>()(
 
           // --- Tutorial Progress Logic ---
           let newTutorialStep = tutorialStep;
+          let logsToPush: string[] = [];
+          const trans = (translations as any)[state.language];
+
           if (tutorialStep === 1) {
-            // Wait for some manual mining (any resources in storage)
             const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
-            if (totalStored >= 10) newTutorialStep = 2;
+            if (totalStored >= 10) { newTutorialStep = 2; logsToPush.push(trans.tutorial.step2); }
           } else if (tutorialStep === 2) {
-            // Wait for storage to be full enough to send transport (or auto-send)
             const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
-            if (totalStored >= storage.capacity * 0.2 && credits > 0) newTutorialStep = 3;
+            if (totalStored >= storage.capacity * 0.2 && credits > 0) { newTutorialStep = 3; logsToPush.push(trans.tutorial.step3); }
           } else if (tutorialStep === 3) {
-            // Wait for drone purchase
-            if (drones.length > 1) newTutorialStep = 4;
+            if (drones.length > 1) { newTutorialStep = 4; logsToPush.push(trans.tutorial.step4); }
           } else if (tutorialStep === 4) {
-            // Wait for Ice discovery
-            if (discoveredResources.includes('ice')) newTutorialStep = 5;
+            if (discoveredResources.includes('ice')) { newTutorialStep = 5; logsToPush.push(trans.tutorial.step5); }
           } else if (tutorialStep === 5) {
-            // Wait for 5000 CR
-            if (credits >= 5000) newTutorialStep = 6;
+            if (credits >= 5000) { newTutorialStep = 6; logsToPush.push(trans.tutorial.step6); }
+          }
+
+          let currentLogs = state.gameLogs;
+          if (logsToPush.length > 0) {
+            const newEntries = logsToPush.map(text => ({
+              id: Math.random().toString(36).substring(2, 9),
+              type: 'CORP' as LogType,
+              text,
+              timestamp: now
+            }));
+            currentLogs = [...newEntries, ...currentLogs.slice(0, 50 - newEntries.length)];
           }
           // -------------------------------
 
@@ -863,6 +886,7 @@ export const useGameStore = create<GameStore>()(
             radar: newRadar,
             energyLevel: newEnergyLevel,
             tutorialStep: newTutorialStep,
+            gameLogs: currentLogs,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };
