@@ -450,15 +450,24 @@ export const useGameStore = create<GameStore>()(
       resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
 
       warpToSector: (sectorId) => {
-        const { credits, currentSectorId, storage, radar } = get();
-        const sector = SECTORS_CONFIG[sectorId];
+        const { credits, currentSectorId, storage, radar, upgrades } = get();
+        const currentSector = SECTORS_CONFIG[currentSectorId];
+        const targetSector = SECTORS_CONFIG[sectorId];
 
-        if (sectorId === currentSectorId || credits < sector.unlockCost) return;
+        if (sectorId === currentSectorId) return;
+
+        // Gates Check
+        const canAfford = credits >= targetSector.unlockCost;
+        const refineryOk = upgrades.refinery.level >= currentSector.maxUpgrades.refinery;
+        const storageOk = upgrades.cargo_bay.level >= currentSector.maxUpgrades.storage;
+        const hangarOk = upgrades.hangar.level >= currentSector.maxUpgrades.hangar;
+
+        if (!canAfford || !refineryOk || !storageOk || !hangarOk) return;
 
         // Start warping
         set((state) => ({
           isWarping: true,
-          credits: state.credits - sector.unlockCost,
+          credits: state.credits - targetSector.unlockCost,
           currentSectorId: sectorId,
           asteroids: [], // Clear asteroids
           storage: {

@@ -161,7 +161,7 @@ const CentralScene: React.FC = () => {
     <div 
       ref={containerRef}
       className={`relative flex-1 w-full overflow-hidden flex items-center justify-center border-y border-space-700 touch-none transition-colors duration-1000
-        ${currentSectorId === 'mars_orbit' ? 'bg-black' : 'bg-space-950'}
+        ${currentSectorId === 'mars_orbit' ? 'bg-[#0a0202]' : 'bg-space-950'}
         ${isWarping ? 'animate-shake' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
@@ -173,6 +173,11 @@ const CentralScene: React.FC = () => {
       <div className="absolute inset-0 z-0">
         <Starfield />
       </div>
+
+      {/* Sector Specific Tint Overlay */}
+      {currentSectorId === 'mars_orbit' && (
+        <div className="absolute inset-0 z-5 bg-red-950/10 pointer-events-none" />
+      )}
 
       {/* 2. Planet Layer: Mars (Fixed) */}
       {currentSectorId === 'mars_orbit' && !isWarping && (
