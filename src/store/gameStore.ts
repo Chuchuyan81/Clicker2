@@ -6,6 +6,8 @@ import { generateRadarGrid, revealEmptyCells } from '../utils/radarUtils';
 import { SECTORS_CONFIG, RESOURCE_CONFIG, SectorId } from '../config/sectors';
 
 interface GameStore extends GameState {
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   addCredits: (amount: number) => void;
   updateDrones: (deltaTime: number) => void;
   updateTransport: (deltaTime: number) => void;
@@ -178,12 +180,15 @@ const INITIAL_STATE_DATA = {
   tutorialStep: 0,
   corporateDebt: 999_999_999_999,
   gameLogs: [],
+  _hasHydrated: false,
 };
 
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       ...INITIAL_STATE_DATA,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       addCredits: (amount) => set((state) => ({ credits: state.credits + amount })),
 
@@ -978,7 +983,15 @@ export const useGameStore = create<GameStore>()(
         hasSeenIntro: state.hasSeenIntro,
         tutorialStep: state.tutorialStep,
         corporateDebt: state.corporateDebt,
+        gameLogs: state.gameLogs || [],
       }),
+      onRehydrateStorage: (state) => {
+        return (rehydratedState, error) => {
+          if (rehydratedState) {
+            rehydratedState.setHasHydrated(true);
+          }
+        };
+      },
     }
   )
 );

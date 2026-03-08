@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { X, Terminal, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 const AITerminalNotification: React.FC = () => {
-  const { gameLogs } = useGameStore();
+  const gameLogs = useGameStore(state => state.gameLogs || []);
   const [lastSeenId, setLastSeenId] = useState<string | null>(null);
   const [currentLog, setCurrentLog] = useState<typeof gameLogs[0] | null>(null);
   const [isVisible, setIsVisible] = useState(false);

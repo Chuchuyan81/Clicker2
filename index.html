@@ -29,6 +29,12 @@
         if (msg.includes('runtime.lastError') || file.includes('content.js') || file.includes('polyfill.js')) {
           event.stopImmediatePropagation();
           event.preventDefault();
+        } else {
+          // DEBUG: Show errors on screen for mobile
+          const d = document.createElement('div');
+          d.style.cssText = 'position:fixed;top:0;left:0;z-index:9999;background:red;color:white;font-size:8px;padding:2px;word-break:break-all;width:100%';
+          d.innerText = 'ERR: ' + msg + ' | ' + file + ':' + event.lineno;
+          document.body.appendChild(d);
         }
       }, true);
     </script>

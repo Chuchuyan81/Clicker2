@@ -86,6 +86,12 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
     }
   }, [gameLogs]);
 
+  const handleSkipBoot = () => {
+    setIsBootComplete(true);
+    setBootLines(introText);
+    setCurrentLineIndex(introText.length);
+  };
+
   const handleHaptic = () => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
@@ -96,13 +102,14 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
   if (!t?.dispatcher) return null;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {(isOpen || !hasSeenIntro) && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[400] bg-black text-[#00FF41] font-mono overflow-hidden flex flex-col"
+          onClick={view === 'boot' && !isBootComplete ? handleSkipBoot : undefined}
         >
           {/* CRT Overlay Effects */}
           <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%]" />

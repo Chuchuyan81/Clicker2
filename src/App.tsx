@@ -23,7 +23,7 @@ const App: React.FC = () => {
     credits, drones, storage, transport, startTransport, activateMiningBurst, 
     boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu,
     radar, startRadarScan, isWarping, currentSectorId,
-    hasSeenIntro, tutorialStep
+    hasSeenIntro, tutorialStep, _hasHydrated
   } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,6 +62,10 @@ const App: React.FC = () => {
   };
 
   const unlocked = credits >= 100 || drones.length > 1;
+
+  if (!_hasHydrated) {
+    return <div className="h-screen w-screen bg-black flex items-center justify-center font-mono text-[#00FF41]">INITIALIZING_SYSTEM...</div>;
+  }
 
   if (!isGameActive) {
     return <MainMenu />;
