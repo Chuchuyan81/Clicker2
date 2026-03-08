@@ -8,7 +8,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&family=Orbitron:wght@400;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/Clicker2/assets/index-CCkm2jwx.js"></script>
+    <script>
+      // Suppression of non-critical extension errors (Chrome extensions, polyfills, etc.)
+      window.addEventListener('unhandledrejection', (event) => {
+        if (event.reason && (
+          event.reason.message?.includes('Could not establish connection') ||
+          event.reason.message?.includes('Receiving end does not exist') ||
+          event.reason.stack?.includes('content.js') ||
+          event.reason.stack?.includes('polyfill.js')
+        )) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      });
+      window.addEventListener('error', (event) => {
+        if (event.message?.includes('runtime.lastError') || event.filename?.includes('content.js') || event.filename?.includes('polyfill.js')) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      }, true);
+    </script>
+    <script type="module" crossorigin src="/Clicker2/assets/index-DKv2sHdD.js"></script>
     <link rel="stylesheet" crossorigin href="/Clicker2/assets/index-CIbWzuV9.css">
   </head>
   <body>
