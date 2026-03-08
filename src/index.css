@@ -83,3 +83,50 @@
   animation: engine-pulse 0.1s ease-in-out infinite;
   transform-origin: top center;
 }
+
+@keyframes saturn-dust {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.2; }
+  80% { opacity: 0.2; }
+  100% { transform: translate(-200px, 100px) rotate(360deg); opacity: 0; }
+}
+
+.animate-saturn-dust {
+  animation: saturn-dust 15s linear infinite;
+}
+
+@keyframes kuiper-static {
+  0% { transform: translate(0,0); }
+  10% { transform: translate(-1%,-1%); }
+  20% { transform: translate(-2%,1%); }
+  30% { transform: translate(1%,-2%); }
+  40% { transform: translate(-1%,1%); }
+  50% { transform: translate(-2%,-1%); }
+  60% { transform: translate(1%,1%); }
+  70% { transform: translate(2%,-2%); }
+  80% { transform: translate(-1%,-1%); }
+  90% { transform: translate(1%,2%); }
+  100% { transform: translate(0,0); }
+}
+
+.animate-kuiper-static {
+  animation: kuiper-static 0.2s steps(1) infinite;
+}
+
+@keyframes accretion-hue {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(360deg); }
+}
+
+.animate-accretion-hue {
+  animation: accretion-hue 20s linear infinite;
+}
+
+@keyframes accretion-distort {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05) rotate(1deg); }
+}
+
+.animate-accretion-distort {
+  animation: accretion-distort 5s ease-in-out infinite;
+}

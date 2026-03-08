@@ -48,6 +48,8 @@ export const translations = {
       initiate_warp: "ИНИЦИИРОВАТЬ ВАРП",
       cost: "Цена",
       available_resources: "Ресурсы",
+      energy_level: "Уровень энергии",
+      energy_low: "КРИТИЧЕСКИЙ ДЕФИЦИТ ЭНЕРГИИ",
       rarity_types: {
         common: "Обычная",
         uncommon: "Средняя",
@@ -64,6 +66,13 @@ export const translations = {
       red_obsidian: "Красный Обсидиан",
       mars_ice: "Марсианский Лед",
       phobos_core: "Ядро Фобоса",
+      liquid_methane: "Жидкий метан",
+      dark_matter: "Темная материя",
+      hexagonal_ice: "Гексагональный лед",
+      frozen_nitrogen: "Замерзший азот",
+      isotope_238: "Изотоп-238",
+      exotic_matter: "Экзотическая материя",
+      pure_energy: "Чистая энергия",
     },
     upgrades: {
       refinery: {
@@ -178,6 +187,8 @@ export const translations = {
       initiate_warp: "INITIATE WARP",
       cost: "Cost",
       available_resources: "Resources",
+      energy_level: "Energy Level",
+      energy_low: "CRITICAL ENERGY DEFICIT",
       rarity_types: {
         common: "Common",
         uncommon: "Uncommon",
@@ -194,6 +205,13 @@ export const translations = {
       red_obsidian: "Red Obsidian",
       mars_ice: "Mars Ice",
       phobos_core: "Phobos Core",
+      liquid_methane: "Liquid Methane",
+      dark_matter: "Dark Matter",
+      hexagonal_ice: "Hexagonal Ice",
+      frozen_nitrogen: "Frozen Nitrogen",
+      isotope_238: "Isotope-238",
+      exotic_matter: "Exotic Matter",
+      pure_energy: "Pure Energy",
     },
     upgrades: {
       refinery: {

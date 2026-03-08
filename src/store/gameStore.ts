@@ -23,6 +23,7 @@ interface GameStore extends GameState {
   exitToMenu: () => void;
   resetGame: () => void;
   warpToSector: (id: SectorId) => void;
+  replenishEnergy: () => void; // New action for Tier 4
   startRadarScan: () => void;
   clickRadarCell: (id: string) => void;
   closeRadar: () => void;
@@ -168,6 +169,7 @@ const INITIAL_STATE_DATA = {
   currentSectorId: 'asteroid_belt' as SectorId,
   discoveredResources: ['metal' as ResourceType],
   radar: INITIAL_RADAR_STATE,
+  energyLevel: 100, // 0-100 for Tier 4
 };
 
 export const useGameStore = create<GameStore>()(
@@ -326,12 +328,15 @@ export const useGameStore = create<GameStore>()(
       },
 
       applyOfflineProgress: (seconds: number) => {
-        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar } = get();
+        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar, currentSectorId } = get();
         const t = (translations as any)[language];
         
+        // Tier 5 Bonus: 2.0x time multiplier
+        const effectiveSeconds = currentSectorId === 'accretion_disk' ? seconds * 2 : seconds;
+
         // Calculate offline radar energy recharge
         let newEnergy = radar.energy;
-        let newEnergyTimer = radar.energyTimerMs + (seconds * 1000);
+        let newEnergyTimer = radar.energyTimerMs + (effectiveSeconds * 1000);
         
         while (newEnergy < radar.maxEnergy && newEnergyTimer >= radar.rechargeRateMs) {
           newEnergy += 1;
@@ -342,7 +347,7 @@ export const useGameStore = create<GameStore>()(
         // Calculate mined resources per type
         const minedByType: Partial<Record<ResourceType, number>> = {};
         drones.forEach(d => {
-          const amount = Math.floor(d.miningRate * multipliers.miningRate * seconds);
+          const amount = Math.floor(d.miningRate * multipliers.miningRate * effectiveSeconds);
           minedByType[d.targetResource] = (minedByType[d.targetResource] || 0) + amount;
         });
         
@@ -448,6 +453,11 @@ export const useGameStore = create<GameStore>()(
       exitToMenu: () => set({ isGameActive: false }),
 
       resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
+
+      replenishEnergy: () => {
+        if (get().currentSectorId !== 'kuiper_belt') return;
+        set((state) => ({ energyLevel: Math.min(100, state.energyLevel + 5) }));
+      },
 
       warpToSector: (sectorId) => {
         const { credits, currentSectorId, storage, radar, upgrades } = get();
@@ -634,7 +644,17 @@ export const useGameStore = create<GameStore>()(
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
+          const { currentSectorId } = state;
           
+          // --- Tier 4: Energy Logic ---
+          let newEnergyLevel = state.energyLevel;
+          if (currentSectorId === 'kuiper_belt') {
+            newEnergyLevel = Math.max(0, newEnergyLevel - (deltaTime / 1000));
+          } else {
+            newEnergyLevel = 100; // Reset or keep 100 in other sectors
+          }
+          const energyPenalty = (currentSectorId === 'kuiper_belt' && newEnergyLevel < 20) ? 0.5 : 1;
+
           // --- Логика астероидов ---
           let newAsteroids = state.asteroids.map(a => {
             const nextX = a.x + Math.cos(a.angle) * a.speed * (deltaTime / 1000);
@@ -707,10 +727,19 @@ export const useGameStore = create<GameStore>()(
             let { progress, state: droneState, timer, angle, curveOffset, distance } = drone;
             const speedMultiplier = state.multipliers.speed;
             
+            // --- Tier 3: Turbulence Logic ---
+            if (currentSectorId === 'saturn_rings' && (droneState === 'flying_out' || droneState === 'returning')) {
+              // Добавляем микро-отклонения к дальности и кривизне в каждом кадре
+              if (Math.random() < 0.05) {
+                curveOffset += (Math.random() - 0.5) * 10;
+                distance += (Math.random() - 0.5) * 5;
+              }
+            }
+
             // deltaTime is in ms
             if (droneState === 'flying_out' || droneState === 'returning') {
-              // Скорость полета зависит от базовой скорости и буста
-              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * miningMultiplier;
+              // Скорость полета зависит от базовой скорости, буста и пенальти энергии
+              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * miningMultiplier * energyPenalty;
               progress += progressIncrement;
 
               if (progress >= 1) {
@@ -734,7 +763,7 @@ export const useGameStore = create<GameStore>()(
               timer -= deltaTime;
               if (timer <= 0) {
                 // Пытаемся разгрузиться
-                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? state.boostMiningMultiplier : 1);
+                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? state.boostMiningMultiplier : 1) * energyPenalty;
                 const added = get().addResourceToStorage(drone.targetResource, amount);
                 
                 if (added) {
@@ -758,6 +787,7 @@ export const useGameStore = create<GameStore>()(
             drones: newDrones,
             asteroids: newAsteroids,
             radar: newRadar,
+            energyLevel: newEnergyLevel,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };
