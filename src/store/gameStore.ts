@@ -183,13 +183,13 @@ const INITIAL_STATE_DATA = {
   gameLogs: [],
   manualClicks: 0,
   lastReadLogId: null,
-  _hasHydrated: false,
 };
 
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       ...INITIAL_STATE_DATA,
+      _hasHydrated: false,
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
