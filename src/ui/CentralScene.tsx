@@ -197,6 +197,9 @@ const CentralScene: React.FC = () => {
 
           {/* Mars Disk (Huge arc at bottom) */}
           <div className="absolute bottom-[-920px] left-1/2 -translate-x-1/2 w-[2400px] h-[1200px] pointer-events-none z-20">
+            {/* Atmosphere Limb Glow (Outer Bloom) */}
+            <div className="absolute inset-0 rounded-[50%] shadow-[0_-20px_50px_rgba(255,150,100,0.15)] bg-gradient-to-b from-[#ff9664]/10 to-transparent" />
+            
             {/* Main Planet Body */}
             <div className="absolute inset-[2px] rounded-[50%] overflow-hidden bg-[#8b2f1a] shadow-[inset_0_40px_100px_rgba(0,0,0,0.9)]">
               {/* Surface Texture from provided photo */}
@@ -213,9 +216,15 @@ const CentralScene: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/95" />
               <div className="absolute inset-0 shadow-[inset_0_80px_150px_rgba(255,150,100,0.15),inset_0_-40px_100px_rgba(0,0,0,1)]" />
               
+              {/* Inner Atmospheric Rim (The bright line) */}
+              <div className="absolute inset-0 rounded-[50%] shadow-[inset_0_15px_30px_rgba(255,200,150,0.1)]" />
+              
               {/* Bright spot from Sun */}
               <div className="absolute top-0 right-[25%] w-[40%] h-[30%] bg-white/5 blur-[100px] rounded-full" />
             </div>
+
+            {/* Sharp atmosphere line (Very subtle) */}
+            <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#ffccaa]/30 to-transparent blur-[0.5px]" />
           </div>
         </>
       )}
