@@ -29,7 +29,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
 
   const t = (translations as any)[language];
 
-  const introText = language === 'ru' ? [
+  const introText = React.useMemo(() => language === 'ru' ? [
     "СОЕДИНЕНИЕ С EXO-NET... [OK]",
     "АВТОРИЗАЦИЯ: Диспетчер #7491. Допуск: МИНИМАЛЬНЫЙ.",
     "ТЕКУЩИЙ ДОЛГ ПЕРЕД КОРПОРАЦИЕЙ: 999,999,999,999 CR.",
@@ -47,7 +47,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
     "\"Welcome to Exo-Mine. Your bucket is docked in the Asteroid Belt.\"",
     "\"Plan for today: dig, sell, don't die. We need our money.\"",
     "\"Good luck, cog.\""
-  ];
+  ], [language]);
 
   // Boot sequence typewriter
   useEffect(() => {
