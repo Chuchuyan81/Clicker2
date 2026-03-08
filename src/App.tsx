@@ -7,8 +7,9 @@ import MainMenu from './ui/MainMenu';
 import RadarOverlay from './ui/RadarOverlay';
 import StarmapModal from './ui/StarmapModal';
 import DispatcherScreen from './ui/DispatcherScreen';
+import AITerminalNotification from './ui/AITerminalNotification';
 import TutorialManager from './ui/TutorialManager';
-import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database, Map, Terminal } from 'lucide-react';
+import { Wallet, Package, Rocket, Zap, Sliders, Lock, Database, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
 
@@ -71,30 +72,15 @@ const App: React.FC = () => {
       
       {/* 🔝 HUD (Верхняя панель) */}
       <header className="h-16 border-b border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-3 md:px-6 justify-between z-50 shrink-0">
-        {/* Left Side: Home & Credits */}
+        {/* Left Side: Terminal & Credits */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <button 
-            onClick={exitToMenu}
-            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer"
-          >
-            <Home size={18} className="text-gray-300" />
-          </button>
-
-          <button 
-            onClick={() => setStarmapOpen(true)}
-            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group relative"
-            title={t.ui.starmap}
-          >
-            <Map size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-neon-blue rounded-full animate-pulse shadow-[0_0_5px_rgba(0,242,255,0.8)]" />
-          </button>
-
-          <button 
             onClick={() => setIsDispatcherOpen(true)}
-            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group"
+            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group relative"
             title={t.ui.terminal}
           >
             <Terminal size={18} className="text-[#00FF41] group-hover:scale-110 transition-transform" />
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#00FF41] rounded-full animate-pulse shadow-[0_0_5px_rgba(0,255,65,0.8)]" />
           </button>
           
           <div className="flex items-center gap-2 ml-1">
@@ -253,6 +239,8 @@ const App: React.FC = () => {
       
       {/* Tutorial */}
       {hasSeenIntro && tutorialStep > 0 && <TutorialManager />}
+
+      <AITerminalNotification />
 
       {/* Warp Flash Effect */}
       <AnimatePresence>
