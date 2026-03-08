@@ -10,10 +10,14 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   ice: 'text-blue-400',
   crystal: 'text-purple-400',
   iridium: 'text-amber-400',
-  rust_dust: 'text-orange-500',
   red_obsidian: 'text-red-500',
-  mars_ice: 'text-cyan-400',
-  phobos_core: 'text-rose-600',
+  martian_dust: 'text-orange-500',
+  frozen_gas: 'text-emerald-500',
+  liquid_metal_core: 'text-gray-400',
+  ring_ice: 'text-blue-300',
+  dark_matter_t4: 'text-indigo-400',
+  antimatter: 'text-lime-500',
+  alien_relics: 'text-violet-500',
 };
 
 const RESOURCE_BG: Record<ResourceType, string> = {
@@ -21,10 +25,14 @@ const RESOURCE_BG: Record<ResourceType, string> = {
   ice: 'bg-blue-500',
   crystal: 'bg-purple-500',
   iridium: 'bg-amber-500',
-  rust_dust: 'bg-orange-600',
   red_obsidian: 'bg-red-600',
-  mars_ice: 'bg-cyan-500',
-  phobos_core: 'bg-rose-700',
+  martian_dust: 'bg-orange-600',
+  frozen_gas: 'bg-emerald-600',
+  liquid_metal_core: 'bg-gray-800',
+  ring_ice: 'bg-blue-400',
+  dark_matter_t4: 'bg-indigo-600',
+  antimatter: 'bg-lime-600',
+  alien_relics: 'bg-violet-600',
 };
 
 const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
@@ -93,7 +101,7 @@ const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {
 };
 
 const RadarOverlay: React.FC = () => {
-  const { radar, closeRadar, storage, language } = useGameStore();
+  const { radar, closeRadar, storage, language, currentSectorId } = useGameStore();
   
   const currentStorage = Object.values(storage.current).reduce((a, b) => a + b, 0);
   const [lastStorageCount, setLastStorageCount] = React.useState(currentStorage);
@@ -120,15 +128,29 @@ const RadarOverlay: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex flex-col bg-black/90 backdrop-blur-xl text-white p-4 md:p-8"
+      className={`fixed inset-0 z-[200] flex flex-col bg-black/90 backdrop-blur-xl text-white p-4 md:p-8 transition-colors duration-1000
+        ${currentSectorId === 'mars_orbit' ? 'bg-red-950/20' : 
+          currentSectorId === 'jupiter_moons' ? 'bg-emerald-950/20' : 
+          currentSectorId === 'saturn_rings' ? 'bg-yellow-950/20' : 
+          'bg-black/90'}`}
     >
+      {/* Blueprint Grid Background for Radar */}
+      <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
+        style={{ 
+          backgroundImage: `
+            linear-gradient(to right, rgba(59, 130, 246, 0.2) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(59, 130, 246, 0.2) 1px, transparent 1px)
+          `,
+          backgroundSize: '20px 20px'
+        }} 
+      />
       {/* Header */}
       <div className="flex items-center justify-between max-w-4xl mx-auto w-full mb-8">
         <div className="flex items-center gap-6">
-          <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">
               <Battery size={14} className="text-neon-blue" />
-              {t.ui.battery_status || 'Energy Units'}
+              {t.ui.battery_status}
             </div>
             <div className="flex gap-1">
               {Array.from({ length: 15 }).map((_, i) => {
@@ -166,7 +188,7 @@ const RadarOverlay: React.FC = () => {
         <div className="flex items-center gap-4">
           {radar.sessionEarnedCR > 0 && (
             <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase font-orbitron text-gray-500">{t.ui.session_profit || 'Yield'}</span>
+              <span className="text-[10px] uppercase font-orbitron text-gray-500">{t.ui.session_profit}</span>
               <span className="text-neon-gold font-mono text-xl">+{Math.floor(radar.sessionEarnedCR)} CR</span>
             </div>
           )}
@@ -195,11 +217,11 @@ const RadarOverlay: React.FC = () => {
       <div className="max-w-2xl mx-auto w-full mt-8 flex justify-between items-center text-gray-500 font-orbitron text-[10px] tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2">
           <MousePointer2 size={12} />
-          {radar.clicksRemaining} {t.ui.clicks_remaining || 'Pulses Left'}
+          {radar.clicksRemaining} {t.ui.clicks_remaining}
         </div>
         <div className="animate-pulse flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-neon-blue" />
-          {t.ui.radar_scanning || 'Scanning Sector...'}
+          {t.ui.radar_scanning}
         </div>
       </div>
 
@@ -211,7 +233,7 @@ const RadarOverlay: React.FC = () => {
           className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-center items-center justify-center z-[210] p-4"
         >
           <div className="flex flex-col items-center gap-6 p-8 border-2 border-neon-blue rounded-2xl bg-space-950 shadow-[0_0_30px_rgba(0,242,255,0.2)] max-w-sm w-full">
-            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em] text-center">{t.ui.scan_complete || 'Scan Complete'}</h2>
+            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em] text-center">{t.ui.scan_complete}</h2>
             
             {/* Resource Summary */}
             <div className="grid grid-cols-2 gap-3 w-full">
@@ -231,7 +253,7 @@ const RadarOverlay: React.FC = () => {
 
             {radar.sessionEarnedCR > 0 && (
               <div className="flex flex-col items-center border-t border-space-800 pt-4 w-full">
-                <span className="text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">{t.ui.total_profit || 'Overflow Profit'}</span>
+                <span className="text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">{t.ui.total_profit}</span>
                 <span className="text-neon-gold text-2xl font-mono">+{Math.floor(radar.sessionEarnedCR)} CR</span>
               </div>
             )}
@@ -240,7 +262,7 @@ const RadarOverlay: React.FC = () => {
               onClick={closeRadar}
               className="w-full py-4 bg-neon-blue text-black font-orbitron uppercase tracking-widest rounded-lg hover:bg-cyan-400 transition-colors cursor-pointer"
             >
-              {t.ui.return_to_base || 'Return to Base'}
+              {t.ui.return_to_base}
             </button>
           </div>
         </motion.div>

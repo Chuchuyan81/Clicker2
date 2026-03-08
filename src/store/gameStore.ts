@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades } from '../types';
+import { GameState, ResourceType, Drone, Resource, DroneType, Upgrade, RadarUpgrades, LogEntry, LogType } from '../types';
 import { translations, Language } from '../translations';
 import { generateRadarGrid, revealEmptyCells } from '../utils/radarUtils';
 import { SECTORS_CONFIG, RESOURCE_CONFIG, SectorId } from '../config/sectors';
 
 interface GameStore extends GameState {
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   addCredits: (amount: number) => void;
   updateDrones: (deltaTime: number) => void;
   updateTransport: (deltaTime: number) => void;
@@ -23,10 +25,16 @@ interface GameStore extends GameState {
   exitToMenu: () => void;
   resetGame: () => void;
   warpToSector: (id: SectorId) => void;
+  replenishEnergy: () => void; // New action for Tier 4
   startRadarScan: () => void;
   clickRadarCell: (id: string) => void;
   closeRadar: () => void;
   upgradeRadar: (id: keyof RadarUpgrades) => boolean;
+  completeIntro: () => void;
+  nextTutorialStep: () => void;
+  addLog: (text: string, type?: LogType) => void;
+  reduceDebt: (amount: number) => void;
+  markLogsAsRead: () => void;
 }
 
 const DRONE_CONFIGS: Record<DroneType, { speed: number, miningRate: number, cost: number, name: string, capacity: number }> = {
@@ -168,14 +176,44 @@ const INITIAL_STATE_DATA = {
   currentSectorId: 'asteroid_belt' as SectorId,
   discoveredResources: ['metal' as ResourceType],
   radar: INITIAL_RADAR_STATE,
+  energyLevel: 100, // 0-100 for Tier 4
+  hasSeenIntro: false,
+  tutorialStep: 0,
+  corporateDebt: 999_999_999_999,
+  gameLogs: [],
+  manualClicks: 0,
+  lastReadLogId: null,
 };
 
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       ...INITIAL_STATE_DATA,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       addCredits: (amount) => set((state) => ({ credits: state.credits + amount })),
+
+      reduceDebt: (amount) => set((state) => ({
+        corporateDebt: Math.max(0, state.corporateDebt - amount)
+      })),
+
+      markLogsAsRead: () => set((state) => ({
+        lastReadLogId: state.gameLogs.length > 0 ? state.gameLogs[0].id : state.lastReadLogId
+      })),
+
+      addLog: (text, type = 'INFO') => set((state) => ({
+        gameLogs: [
+          {
+            id: Math.random().toString(36).substring(2, 9),
+            type,
+            text,
+            timestamp: Date.now()
+          },
+          ...state.gameLogs.slice(0, 49) // Keep last 50
+        ]
+      })),
 
       addNotification: (type, value) => set((state) => ({
         notifications: [
@@ -242,7 +280,18 @@ export const useGameStore = create<GameStore>()(
 
         if (credits >= upgrade.cost && upgrade.level < maxLevel) {
           const newLevel = upgrade.level + 1;
-          const newCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, newLevel));
+          
+          // --- Soft Exponential Cost Scaling ---
+          // prevents Infinity and allows deeper progression
+          let newCost = 0;
+          if (newLevel <= 20) {
+            newCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, newLevel));
+          } else {
+            // After level 20, growth slows down to linear-exponential mix
+            const costAt20 = upgrade.baseCost * Math.pow(upgrade.costMultiplier, 20);
+            const linearFactor = upgrade.baseCost * upgrade.costMultiplier * (newLevel - 20);
+            newCost = Math.floor(costAt20 + linearFactor * Math.pow(1.1, newLevel - 20));
+          }
           
           set((state) => {
             const newUpgrades = {
@@ -326,12 +375,15 @@ export const useGameStore = create<GameStore>()(
       },
 
       applyOfflineProgress: (seconds: number) => {
-        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar } = get();
+        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar, currentSectorId } = get();
         const t = (translations as any)[language];
         
+        // Tier 5 Bonus: 2.0x time multiplier
+        const effectiveSeconds = currentSectorId === 'kuiper_belt' ? seconds * 2 : seconds;
+
         // Calculate offline radar energy recharge
         let newEnergy = radar.energy;
-        let newEnergyTimer = radar.energyTimerMs + (seconds * 1000);
+        let newEnergyTimer = radar.energyTimerMs + (effectiveSeconds * 1000);
         
         while (newEnergy < radar.maxEnergy && newEnergyTimer >= radar.rechargeRateMs) {
           newEnergy += 1;
@@ -342,7 +394,7 @@ export const useGameStore = create<GameStore>()(
         // Calculate mined resources per type
         const minedByType: Partial<Record<ResourceType, number>> = {};
         drones.forEach(d => {
-          const amount = Math.floor(d.miningRate * multipliers.miningRate * seconds);
+          const amount = Math.floor(d.miningRate * multipliers.miningRate * effectiveSeconds);
           minedByType[d.targetResource] = (minedByType[d.targetResource] || 0) + amount;
         });
         
@@ -360,12 +412,14 @@ export const useGameStore = create<GameStore>()(
         const currentTotal = Object.values(newStorageCurrent).reduce((a, b) => a + b, 0);
         
         if (automationEnabled && currentTotal > capacity * 0.8) {
-          // Sell everything
-          Object.entries(newStorageCurrent).forEach(([type, amount]) => {
-            const resType = type as ResourceType;
+        // Sell everything
+        Object.entries(newStorageCurrent).forEach(([type, amount]) => {
+          const resType = type as ResourceType;
+          if (resources[resType]) {
             earnedCredits += amount * resources[resType].basePrice * multipliers.price;
-            newStorageCurrent[resType] = 0;
-          });
+          }
+          newStorageCurrent[resType] = 0;
+        });
         } else if (currentTotal > capacity) {
           // Cap storage proportionally
           const factor = capacity / currentTotal;
@@ -399,7 +453,7 @@ export const useGameStore = create<GameStore>()(
       },
 
       manualMine: (id, x, y) => {
-        const { addResourceToStorage, asteroids, discoveredResources } = get();
+        const { addResourceToStorage, asteroids, discoveredResources, upgrades } = get();
         const asteroid = asteroids.find(a => a.id === id);
         if (!asteroid) return;
 
@@ -410,11 +464,13 @@ export const useGameStore = create<GameStore>()(
           }));
           // We'll handle the visual popup via a specific notification type or listener
           const t = (translations as any)[get().language];
-          get().addNotification('info', `NEW: ${t.resources[asteroid.resourceType]}`);
+          get().addNotification('info', t.notifications.new_resource.replace('{name}', t.resources[asteroid.resourceType]));
         }
 
         const isLastHit = asteroid.hits + 1 >= asteroid.maxHits;
-        const amount = isLastHit ? asteroid.maxHits * 2 : 0;
+        const refineryLevel = upgrades.refinery?.level || 0;
+        const baseAmount = asteroid.maxHits * 2;
+        const amount = isLastHit ? Math.floor(baseAmount * (1 + refineryLevel * 0.15)) : 0;
         
         let added = true;
         if (amount > 0) {
@@ -423,6 +479,7 @@ export const useGameStore = create<GameStore>()(
 
         if (added) {
           set((state) => ({
+            manualClicks: state.manualClicks + 1,
             asteroids: isLastHit 
               ? state.asteroids.filter(a => a.id !== id)
               : state.asteroids.map(a => a.id === id 
@@ -447,7 +504,12 @@ export const useGameStore = create<GameStore>()(
 
       exitToMenu: () => set({ isGameActive: false }),
 
-      resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now() }),
+      resetGame: () => set({ ...INITIAL_STATE_DATA, isGameActive: true, lastSeen: Date.now(), hasSeenIntro: false, tutorialStep: 0 }),
+
+      replenishEnergy: () => {
+        if (get().currentSectorId !== 'kuiper_belt') return;
+        set((state) => ({ energyLevel: Math.min(100, state.energyLevel + 5) }));
+      },
 
       warpToSector: (sectorId) => {
         const { credits, currentSectorId, storage, radar, upgrades } = get();
@@ -486,10 +548,13 @@ export const useGameStore = create<GameStore>()(
           }
         }));
 
-        // End warping after 3 seconds
+        // End warping after 1 second
         setTimeout(() => {
           set({ isWarping: false });
-        }, 3000);
+          const t = (translations as any)[get().language];
+          const sectorName = t.warp_menu.sector_names[targetSector.id];
+          get().addNotification('info', t.notifications.warp_success.replace('{name}', sectorName));
+        }, 1000);
       },
 
       startRadarScan: () => {
@@ -498,6 +563,8 @@ export const useGameStore = create<GameStore>()(
         
         const grid = generateRadarGrid(radar.upgrades, currentSectorId);
         const clicksRemaining = 10 + (radar.upgrades.battery * 2);
+
+        get().addLog('Сектор просканирован. Обнаружены плотные залежи.', 'INFO');
 
         set((state) => ({
           radar: {
@@ -556,12 +623,14 @@ export const useGameStore = create<GameStore>()(
             }
             
             // Штрафная продажа (75% цены)
-            const resourcePrice = resources[resType].basePrice * multipliers.price;
+            const resource = resources[resType];
+            const resourcePrice = resource ? (resource.basePrice * multipliers.price) : 0;
             const creditsEarned = Math.floor(overflowVolume * resourcePrice * 0.75);
             
             addCredits(creditsEarned);
             newSessionEarnedCR += creditsEarned;
-            get().addNotification('info', `OVERFLOW: +${creditsEarned} CR`);
+            const t = (translations as any)[get().language];
+            get().addNotification('info', t.notifications.overflow.replace('{credits}', creditsEarned.toString()));
           }
 
           // Статистика сессии
@@ -572,6 +641,7 @@ export const useGameStore = create<GameStore>()(
             newDiscoveredResources.push(resType);
             const t = (translations as any)[get().language];
             get().addNotification('info', t.ui.resource_identified || 'NEW RESOURCE!');
+            get().addLog(`Обнаружен новый ресурс: ${t.resources[resType]}.`, 'INFO');
           }
         } else if (targetCell.type === 'empty' && targetCell.adjacentCount === 0) {
           const size = Math.sqrt(radar.grid.length);
@@ -631,10 +701,81 @@ export const useGameStore = create<GameStore>()(
         return false;
       },
 
+      completeIntro: () => {
+        const t = (translations as any)[get().language];
+        set({ hasSeenIntro: true, tutorialStep: 1 });
+        get().addLog(t.tutorial.step1, 'CORP');
+      },
+
+      nextTutorialStep: () => set((state) => {
+        const newStep = state.tutorialStep + 1;
+        const t = (translations as any)[state.language];
+        const tutorialMsg = (t.tutorial as any)[`step${newStep}`];
+        
+        if (tutorialMsg) {
+          get().addLog(tutorialMsg, 'CORP');
+        }
+        
+        return { tutorialStep: newStep };
+      }),
+
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
+          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt, manualClicks } = state;
           
+          // --- Corporate Debt Interest (Disabled) ---
+          const newDebt = corporateDebt;
+
+          // --- Tier 4: Energy Logic ---
+          let newEnergyLevel = state.energyLevel;
+          if (currentSectorId === 'kuiper_belt') {
+            newEnergyLevel = Math.max(0, newEnergyLevel - (deltaTime / 1000));
+          } else {
+            newEnergyLevel = 100; // Reset or keep 100 in other sectors
+          }
+          const energyPenalty = (currentSectorId === 'kuiper_belt' && newEnergyLevel < 20) ? 0.5 : 1;
+
+          // --- Warning Logs ---
+          const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+          if (totalStored > storage.capacity * 0.9 && !state.gameLogs.some(l => l.text.includes("Склад заполнен") && now - l.timestamp < 30000)) {
+            get().addLog('ВНИМАНИЕ: Склад заполнен на 90%!', 'WARNING');
+          }
+          if (newEnergyLevel < 20 && currentSectorId === 'kuiper_belt' && !state.gameLogs.some(l => l.text.includes("Энергия на исходе") && now - l.timestamp < 30000)) {
+            get().addLog('ВНИМАНИЕ: Энергия на исходе. Срочно зарядите базу!', 'WARNING');
+          }
+
+          // --- Tutorial Progress Logic ---
+          let newTutorialStep = tutorialStep;
+          let logsToPush: string[] = [];
+          const trans = (translations as any)[state.language];
+
+          if (tutorialStep === 1) {
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= 10 && manualClicks >= 1) { newTutorialStep = 2; logsToPush.push(trans.tutorial.step2); }
+          } else if (tutorialStep === 2) {
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= storage.capacity * 0.2 && credits > 0) { newTutorialStep = 3; logsToPush.push(trans.tutorial.step3); }
+          } else if (tutorialStep === 3) {
+            if (drones.length > 1) { newTutorialStep = 4; logsToPush.push(trans.tutorial.step4); }
+          } else if (tutorialStep === 4) {
+            if (discoveredResources.includes('ice')) { newTutorialStep = 5; logsToPush.push(trans.tutorial.step5); }
+          } else if (tutorialStep === 5) {
+            if (credits >= 15000) { newTutorialStep = 6; logsToPush.push(trans.tutorial.step6); }
+          }
+
+          let currentLogs = state.gameLogs;
+          if (logsToPush.length > 0) {
+            const newEntries = logsToPush.map(text => ({
+              id: Math.random().toString(36).substring(2, 9),
+              type: 'CORP' as LogType,
+              text,
+              timestamp: now
+            }));
+            currentLogs = [...newEntries, ...currentLogs.slice(0, 50 - newEntries.length)];
+          }
+          // -------------------------------
+
           // --- Логика астероидов ---
           let newAsteroids = state.asteroids.map(a => {
             const nextX = a.x + Math.cos(a.angle) * a.speed * (deltaTime / 1000);
@@ -707,10 +848,19 @@ export const useGameStore = create<GameStore>()(
             let { progress, state: droneState, timer, angle, curveOffset, distance } = drone;
             const speedMultiplier = state.multipliers.speed;
             
+            // --- Tier 3: Turbulence Logic ---
+            if (currentSectorId === 'saturn_rings' && (droneState === 'flying_out' || droneState === 'returning')) {
+              // Добавляем микро-отклонения к дальности и кривизне в каждом кадре
+              if (Math.random() < 0.05) {
+                curveOffset += (Math.random() - 0.5) * 10;
+                distance += (Math.random() - 0.5) * 5;
+              }
+            }
+
             // deltaTime is in ms
             if (droneState === 'flying_out' || droneState === 'returning') {
-              // Скорость полета зависит от базовой скорости и буста
-              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * miningMultiplier;
+              // Скорость полета зависит от базовой скорости, буста и пенальти энергии
+              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * miningMultiplier * energyPenalty;
               progress += progressIncrement;
 
               if (progress >= 1) {
@@ -734,7 +884,7 @@ export const useGameStore = create<GameStore>()(
               timer -= deltaTime;
               if (timer <= 0) {
                 // Пытаемся разгрузиться
-                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? state.boostMiningMultiplier : 1);
+                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? state.boostMiningMultiplier : 1) * energyPenalty;
                 const added = get().addResourceToStorage(drone.targetResource, amount);
                 
                 if (added) {
@@ -745,6 +895,22 @@ export const useGameStore = create<GameStore>()(
                   angle = Math.PI + Math.random() * Math.PI;
                   curveOffset = (Math.random() - 0.5) * 100;
                   distance = 500 + Math.random() * 300;
+
+                  // --- Auto-Target Best Resource ---
+                  const sector = SECTORS_CONFIG[currentSectorId];
+                  const discovered = state.discoveredResources;
+                  const availableInSector = sector.resources.filter(r => discovered.includes(r));
+                  
+                  if (availableInSector.length > 0) {
+                    // Find resource with highest base price
+                    const bestRes = availableInSector.reduce((best, current) => {
+                      const bestPrice = RESOURCE_CONFIG[best]?.basePrice || 0;
+                      const currentPrice = RESOURCE_CONFIG[current]?.basePrice || 0;
+                      return currentPrice > bestPrice ? current : best;
+                    }, availableInSector[0]);
+                    
+                    return { ...drone, progress, state: droneState, timer, angle, curveOffset, distance, targetResource: bestRes };
+                  }
                 } else {
                   timer = 0; // Ждем у базы (состояние unloading_wait с таймером 0 означает "готов, но склад полон")
                 }
@@ -758,6 +924,10 @@ export const useGameStore = create<GameStore>()(
             drones: newDrones,
             asteroids: newAsteroids,
             radar: newRadar,
+            energyLevel: newEnergyLevel,
+            tutorialStep: newTutorialStep,
+            gameLogs: currentLogs,
+            corporateDebt: newDebt,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };
@@ -774,13 +944,27 @@ export const useGameStore = create<GameStore>()(
         (Object.keys(newStorageCurrent) as ResourceType[]).forEach((resId) => {
           const amount = newStorageCurrent[resId];
           const resource = resources[resId];
-          totalEarned += amount * resource.basePrice * multipliers.price;
+          if (resource) {
+            totalEarned += amount * resource.basePrice * multipliers.price;
+          }
           newStorageCurrent[resId] = 0;
         });
 
         if (totalEarned > 0) {
           addCredits(totalEarned);
+          get().reduceDebt(totalEarned);
           get().addNotification('sale', `+${Math.floor(totalEarned)} CR`);
+          get().addLog(`Транспорт отправлен. Доход: ${Math.floor(totalEarned)} CR.`, 'INFO');
+          
+          if (Math.random() < 0.1) {
+            const corpMsgs = [
+              "Твое дыхание стоит нам 0.02 CR в минуту. Работай быстрее.",
+              "Корпорация напоминает: сон — это роскошь, которую ты пока не заслужил.",
+              "Твое корыто все еще в долгах. Не расслабляйся.",
+              "Каждый клик приближает тебя к свободе (но это не точно)."
+            ];
+            get().addLog(corpMsgs[Math.floor(Math.random() * corpMsgs.length)], 'CORP');
+          }
           
           set((state) => ({
             storage: { ...state.storage, current: newStorageCurrent },
@@ -866,7 +1050,35 @@ export const useGameStore = create<GameStore>()(
         currentSectorId: state.currentSectorId,
         discoveredResources: state.discoveredResources,
         radar: state.radar,
+        hasSeenIntro: state.hasSeenIntro,
+        tutorialStep: state.tutorialStep,
+        corporateDebt: state.corporateDebt,
+        gameLogs: state.gameLogs || [],
+        manualClicks: state.manualClicks || 0,
+        lastReadLogId: state.lastReadLogId || null,
       }),
+      onRehydrateStorage: (state) => {
+        return (rehydratedState: any, error) => {
+          if (rehydratedState) {
+            // Data Migration: Remove resources from storage that no longer exist
+            if (rehydratedState.storage?.current) {
+              const validResources = Object.keys(RESOURCE_CONFIG);
+              Object.keys(rehydratedState.storage.current).forEach(key => {
+                if (!validResources.includes(key)) {
+                  delete rehydratedState.storage.current[key];
+                }
+              });
+            }
+            // Ensure discoveredResources only contains valid types
+            if (rehydratedState.discoveredResources) {
+              rehydratedState.discoveredResources = rehydratedState.discoveredResources.filter(
+                (res: string) => Object.keys(RESOURCE_CONFIG).includes(res)
+              );
+            }
+            rehydratedState.setHasHydrated(true);
+          }
+        };
+      },
     }
   )
 );

@@ -6,7 +6,9 @@ import UpgradeModal from './ui/UpgradeModal';
 import MainMenu from './ui/MainMenu';
 import RadarOverlay from './ui/RadarOverlay';
 import StarmapModal from './ui/StarmapModal';
-import { Wallet, Package, Rocket, Zap, Sliders, Lock, Home, Database, Map } from 'lucide-react';
+import DispatcherScreen from './ui/DispatcherScreen';
+import AITerminalNotification from './ui/AITerminalNotification';
+import { Wallet, Package, Rocket, Zap, Sliders, Lock, Database, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from './translations';
 
@@ -19,11 +21,13 @@ const App: React.FC = () => {
   const { 
     credits, drones, storage, transport, startTransport, activateMiningBurst, 
     boostEndTime, lastSaleTimestamp, language, isGameActive, exitToMenu,
-    radar, startRadarScan, isWarping, currentSectorId
+    radar, startRadarScan, isWarping, currentSectorId,
+    hasSeenIntro, tutorialStep, _hasHydrated, gameLogs, lastReadLogId, markLogsAsRead, energyLevel
   } = useGameStore();
   const [, setBoostTick] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [starmapOpen, setStarmapOpen] = useState(false);
+  const [isDispatcherOpen, setIsDispatcherOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'upgrades' | 'drones' | 'archive' | 'radar'>('upgrades');
 
   const t = (translations as any)[language];
@@ -58,6 +62,13 @@ const App: React.FC = () => {
 
   const unlocked = credits >= 100 || drones.length > 1;
 
+  const latestLog = gameLogs.length > 0 ? gameLogs[0] : null;
+  const hasNewImportantLog = latestLog && latestLog.id !== lastReadLogId && (latestLog.type === 'CORP' || latestLog.type === 'WARNING');
+
+  if (!_hasHydrated) {
+    return <div className="h-screen w-screen bg-black flex items-center justify-center font-mono text-[#00FF41]">INITIALIZING_SYSTEM...</div>;
+  }
+
   if (!isGameActive) {
     return <MainMenu />;
   }
@@ -67,21 +78,21 @@ const App: React.FC = () => {
       
       {/* 🔝 HUD (Верхняя панель) */}
       <header className="h-16 border-b border-space-700 bg-space-800/80 backdrop-blur-md flex items-center px-3 md:px-6 justify-between z-50 shrink-0">
-        {/* Left Side: Home & Credits */}
+        {/* Left Side: Terminal & Credits */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <button 
-            onClick={exitToMenu}
-            className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer"
-          >
-            <Home size={18} className="text-gray-300" />
-          </button>
-
-          <button 
-            onClick={() => setStarmapOpen(true)}
+            onClick={() => {
+              setIsDispatcherOpen(true);
+              markLogsAsRead();
+            }}
             className="p-2 rounded-lg bg-space-700 border border-space-600 hover:bg-space-600 transition-colors cursor-pointer group relative"
+            title={t.ui.terminal}
           >
-            <Map size={18} className="text-neon-blue group-hover:scale-110 transition-transform" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-neon-blue rounded-full animate-pulse shadow-[0_0_5px_rgba(0,242,255,0.8)]" />
+            <Terminal size={18} className="text-[#00FF41] group-hover:scale-110 transition-transform" />
+            {hasNewImportantLog && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-black z-10" />
+            )}
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#00FF41] rounded-full animate-pulse shadow-[0_0_5px_rgba(0,255,65,0.8)]" />
           </button>
           
           <div className="flex items-center gap-2 ml-1">
@@ -130,6 +141,19 @@ const App: React.FC = () => {
             </button>
           </div>
 
+          {/* Energy Status (Tier 4 Kuiper Belt only) */}
+          {currentSectorId === 'kuiper_belt' && (
+            <div className="flex flex-col items-center gap-1 min-w-[50px] md:min-w-[80px] shrink-0">
+              <div className="text-[8px] md:text-[10px] uppercase font-orbitron text-gray-400 flex items-center gap-1">
+                <Zap size={10} className={energyLevel < 20 ? "text-red-500 animate-pulse" : "text-neon-blue"} /> 
+                <span className={energyLevel < 20 ? "text-red-500" : ""}>ENG</span>
+              </div>
+              <div className={`text-[10px] md:text-xs font-mono font-bold ${energyLevel < 20 ? "text-red-500 animate-pulse" : "text-neon-blue"}`}>
+                {Math.floor(energyLevel)}%
+              </div>
+            </div>
+          )}
+
           {/* Transport Status - Simple Badge */}
           <div className="flex flex-col items-center gap-1 min-w-[65px] md:min-w-[100px] shrink-0">
             <div className="text-[8px] md:text-[10px] uppercase font-orbitron text-gray-400 flex items-center gap-1">
@@ -176,7 +200,7 @@ const App: React.FC = () => {
           <Rocket size={18} className="text-neon-gold mb-1" />
           <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.send}</span>
           {currentStorage < storage.capacity * 0.2 && !transport.isActive && (
-            <span className="absolute -top-4 md:-top-6 text-[7px] md:text-[8px] text-gray-500 font-mono whitespace-nowrap">min 20%</span>
+            <span className="absolute -top-4 md:-top-6 text-[7px] md:text-[8px] text-gray-500 font-mono whitespace-nowrap">{t.ui.min_20}</span>
           )}
         </button>
 
@@ -232,6 +256,13 @@ const App: React.FC = () => {
         onClose={() => setStarmapOpen(false)}
       />
       <RadarOverlay />
+      <DispatcherScreen 
+        isOpen={isDispatcherOpen} 
+        onClose={() => setIsDispatcherOpen(false)}
+        onOpenStarmap={() => { setIsDispatcherOpen(false); setStarmapOpen(true); }}
+      />
+      
+      <AITerminalNotification />
 
       {/* Warp Flash Effect */}
       <AnimatePresence>
@@ -239,7 +270,7 @@ const App: React.FC = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 3, times: [0, 0.1, 0.5, 1] }}
+            transition={{ duration: 1, times: [0, 0.1, 0.5, 1] }}
             className="fixed inset-0 z-[300] bg-white pointer-events-none"
           />
         )}

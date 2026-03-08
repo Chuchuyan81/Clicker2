@@ -5,21 +5,31 @@ import { ResourceType } from '../types';
 import { translations } from '../translations';
 import { RESOURCE_CONFIG } from '../config/sectors';
 import Starfield from './Starfield';
+import { motion } from 'framer-motion';
 
 const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w-28', h: 'h-28', inner: 'w-20 h-20' }, 3: { w: 'w-32', h: 'h-32', inner: 'w-24 h-24' } } as const;
 
 const BaseHQ: React.FC<{ level: number, boostActive: boolean }> = ({ level, boostActive }) => {
   const language = useGameStore(state => state.language);
+  const energyLevel = useGameStore(state => state.energyLevel);
   const t = (translations as any)[language];
   const lvl = Math.max(1, Math.min(level, 3)) as 1 | 2 | 3;
   const sz = BASE_SIZES[lvl];
   const isHex = lvl >= 2;
   const isTier3 = lvl >= 3;
 
+  const isLowEnergy = energyLevel < 20;
+
   return (
-    <div className={`relative z-10 ${sz.w} ${sz.h} bg-space-800 flex items-center justify-center neon-border
-      ${isHex ? 'clip-hex' : 'rounded-full'} ${isTier3 ? 'ring-2 ring-neon-gold/50' : ''}`}
+    <div 
+      className={`relative z-10 ${sz.w} ${sz.h} bg-space-800 flex items-center justify-center neon-border cursor-pointer active:scale-95 transition-transform
+        ${isHex ? 'clip-hex' : 'rounded-full'} ${isTier3 ? 'ring-2 ring-neon-gold/50' : ''} ${isLowEnergy ? 'low-energy-flicker border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
       style={isHex ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
+      onClick={(e) => {
+        e.stopPropagation();
+        const state = useGameStore.getState();
+        if (state.currentSectorId === 'kuiper_belt') state.replenishEnergy();
+      }}
     >
       <div className={`${sz.inner} bg-space-700 flex items-center justify-center ${isHex ? 'rounded-md' : 'rounded-lg'} animate-pulse`}
         style={isHex ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
@@ -44,20 +54,37 @@ const RESOURCE_COLORS: Record<ResourceType, { base: string, border: string, glow
   ice: { base: 'bg-blue-950', border: 'border-blue-800', glow: 'bg-white/10' },
   crystal: { base: 'bg-purple-950', border: 'border-purple-800', glow: 'bg-fuchsia-500/10' },
   iridium: { base: 'bg-amber-950', border: 'border-amber-800', glow: 'bg-yellow-500/10' },
-  rust_dust: { base: 'bg-orange-950', border: 'border-orange-900', glow: 'bg-orange-500/10' },
   red_obsidian: { base: 'bg-red-950', border: 'border-red-900', glow: 'bg-red-500/10' },
-  mars_ice: { base: 'bg-cyan-950', border: 'border-cyan-900', glow: 'bg-cyan-500/10' },
-  phobos_core: { base: 'bg-rose-950', border: 'border-rose-900', glow: 'bg-rose-500/10' },
+  martian_dust: { base: 'bg-orange-950', border: 'border-orange-900', glow: 'bg-orange-500/10' },
+  frozen_gas: { base: 'bg-emerald-950', border: 'border-emerald-900', glow: 'bg-emerald-500/10' },
+  liquid_metal_core: { base: 'bg-gray-900', border: 'border-gray-800', glow: 'bg-purple-500/10' },
+  ring_ice: { base: 'bg-blue-900', border: 'border-blue-700', glow: 'bg-blue-400/10' },
+  dark_matter_t4: { base: 'bg-indigo-950', border: 'border-indigo-900', glow: 'bg-indigo-500/10' },
+  antimatter: { base: 'bg-lime-950', border: 'border-lime-900', glow: 'bg-lime-500/10' },
+  alien_relics: { base: 'bg-violet-950', border: 'border-violet-900', glow: 'bg-violet-500/10' },
 };
 
 const CentralScene: React.FC = () => {
-  const { drones, transport, notifications, baseLevel, manualMine, asteroids, boostEndTime, discoveredResources, language, isWarping, currentSectorId } = useGameStore();
+  const { 
+    drones, transport, notifications, baseLevel, manualMine, asteroids, 
+    boostEndTime, discoveredResources, language, isWarping, currentSectorId,
+    energyLevel, replenishEnergy
+  } = useGameStore();
   const boostActive = boostEndTime > Date.now();
   const t_ui = (translations as any)[language].ui;
   const t_res = (translations as any)[language].resources;
 
   const [discoveryPopup, setDiscoveryPopup] = useState<ResourceType | null>(null);
   const lastDiscoveredCount = useRef(discoveredResources.length);
+  const lastSectorId = useRef(currentSectorId);
+
+  // Reset camera on warp
+  useEffect(() => {
+    if (isWarping) {
+      setZoom(0.5);
+      setOffset({ x: 0, y: 0 });
+    }
+  }, [isWarping]);
 
   // Effect to catch new discoveries and show popup
   useEffect(() => {
@@ -73,7 +100,7 @@ const CentralScene: React.FC = () => {
     lastDiscoveredCount.current = discoveredResources.length;
   }, [discoveredResources]);
 
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.5);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -83,20 +110,20 @@ const CentralScene: React.FC = () => {
   // --- Zoom logic (Mouse wheel) ---
   const handleWheel = (e: React.WheelEvent) => {
     const delta = -e.deltaY;
-    const newZoom = Math.max(1, Math.min(zoom + delta * 0.001, 3));
+    const newZoom = Math.max(0.5, Math.min(zoom + delta * 0.001, 3));
     setZoom(newZoom);
-    if (newZoom === 1) setOffset({ x: 0, y: 0 });
+    if (newZoom <= 0.5) setOffset({ x: 0, y: 0 });
   };
 
   // --- Panning logic (Mouse) ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom <= 1) return;
+    if (zoom <= 0.5) return;
     setIsDragging(true);
     dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || zoom <= 1) return;
+    if (!isDragging || zoom <= 0.5) return;
     setOffset({
       x: e.clientX - dragStart.current.x,
       y: e.clientY - dragStart.current.y
@@ -113,7 +140,7 @@ const CentralScene: React.FC = () => {
         e.touches[0].clientY - e.touches[1].clientY
       );
       lastTouchDistance.current = dist;
-    } else if (e.touches.length === 1 && zoom > 1) {
+    } else if (e.touches.length === 1 && zoom > 0.5) {
       setIsDragging(true);
       dragStart.current = { x: e.touches[0].clientX - offset.x, y: e.touches[0].clientY - offset.y };
     }
@@ -126,11 +153,11 @@ const CentralScene: React.FC = () => {
         e.touches[0].clientY - e.touches[1].clientY
       );
       const delta = dist - lastTouchDistance.current;
-      const newZoom = Math.max(1, Math.min(zoom + delta * 0.01, 3));
+      const newZoom = Math.max(0.5, Math.min(zoom + delta * 0.01, 3));
       setZoom(newZoom);
-      if (newZoom === 1) setOffset({ x: 0, y: 0 });
+      if (newZoom <= 0.5) setOffset({ x: 0, y: 0 });
       lastTouchDistance.current = dist;
-    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
+    } else if (e.touches.length === 1 && isDragging && zoom > 0.5) {
       setOffset({
         x: e.touches[0].clientX - dragStart.current.x,
         y: e.touches[0].clientY - dragStart.current.y
@@ -157,12 +184,27 @@ const CentralScene: React.FC = () => {
     };
   }, [isDragging, handleMouseMove]);
 
+  const getSectorStyles = () => {
+    switch(currentSectorId) {
+      case 'mars_orbit': return 'bg-[#0a0202]';
+      case 'jupiter_moons': return 'bg-[#051a10]'; // Dark green tint for Jupiter
+      case 'saturn_rings': return 'bg-[#1a1505]';
+      case 'kuiper_belt': return 'bg-[#050a1a]';
+      default: return 'bg-space-950';
+    }
+  };
+
+  const getZoomLevel = () => {
+    if (currentSectorId === 'kuiper_belt') return zoom * 1.5;
+    return zoom;
+  };
+
   return (
     <div 
       ref={containerRef}
       className={`relative flex-1 w-full overflow-hidden flex items-center justify-center border-y border-space-700 touch-none transition-colors duration-1000
-        ${currentSectorId === 'mars_orbit' ? 'bg-[#0a0202]' : 'bg-space-950'}
-        ${isWarping ? 'animate-shake' : ''}`}
+        ${getSectorStyles()}
+        ${(isWarping || currentSectorId === 'kuiper_belt') ? 'animate-shake' : ''}`}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -174,9 +216,58 @@ const CentralScene: React.FC = () => {
         <Starfield />
       </div>
 
-      {/* Sector Specific Tint Overlay */}
+      {/* Sector Specific Overlays */}
       {currentSectorId === 'mars_orbit' && (
         <div className="absolute inset-0 z-5 bg-red-950/10 pointer-events-none" />
+      )}
+      {currentSectorId === 'jupiter_moons' && (
+        <div className="absolute inset-0 z-5 bg-emerald-950/10 pointer-events-none" />
+      )}
+      {currentSectorId === 'saturn_rings' && (
+        <>
+          <div className="absolute inset-0 z-5 bg-yellow-950/10 pointer-events-none" />
+          <div className="absolute inset-0 z-5 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 animate-saturn-dust" />
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 animate-saturn-dust" style={{ animationDelay: '-5s', animationDirection: 'reverse' }} />
+          </div>
+        </>
+      )}
+      {currentSectorId === 'kuiper_belt' && (
+        <>
+          <div className="absolute inset-0 z-5 bg-blue-900/20 pointer-events-none" />
+          <div className="absolute inset-0 z-5 bg-white/[0.02] animate-kuiper-static pointer-events-none mix-blend-overlay" />
+        </>
+      )}
+
+      {/* Tier 4: Energy HUD */}
+      {currentSectorId === 'kuiper_belt' && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 w-64 p-3 bg-black/60 border border-blue-500/30 rounded-xl backdrop-blur-sm shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+          <div className="flex items-center justify-between mb-1.5 px-1">
+            <span className="text-[10px] font-orbitron text-blue-400 uppercase tracking-widest flex items-center gap-2">
+              <Zap size={12} className={energyLevel < 20 ? 'text-red-500 animate-pulse' : 'text-blue-400'} />
+              {t_ui.energy_level}
+            </span>
+            <span className={`text-xs font-mono ${energyLevel < 20 ? 'text-red-500 font-bold' : 'text-blue-300'}`}>
+              {Math.floor(energyLevel)}%
+            </span>
+          </div>
+          <div className="h-2 bg-blue-900/30 rounded-full overflow-hidden border border-blue-500/20">
+            <motion.div 
+              className={`h-full ${energyLevel < 20 ? 'bg-red-500' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`}
+              initial={{ width: '100%' }}
+              animate={{ width: `${energyLevel}%` }}
+              transition={{ duration: 0.1 }}
+            />
+          </div>
+          {energyLevel < 20 && (
+            <div className="mt-2 text-center text-[8px] font-orbitron text-red-500 animate-pulse tracking-tighter">
+              {t_ui.energy_low}
+            </div>
+          )}
+          <div className="mt-1 text-center text-[7px] text-blue-400/50 uppercase font-mono tracking-tighter">
+            {t_ui.recharge_hint}
+          </div>
+        </div>
       )}
 
       {/* 2. Planet Layer: Mars (Fixed) */}
@@ -231,9 +322,9 @@ const CentralScene: React.FC = () => {
       
       {/* 3. Game Objects Layer (Zoomable/Pannable) */}
       <div 
-        className="relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform z-30"
+        className={`relative w-full h-full flex items-center justify-center transition-transform duration-75 will-change-transform z-30 ${currentSectorId === 'kuiper_belt' ? 'blur-[0.5px]' : ''}`}
         style={{ 
-          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${getZoomLevel()})`,
           cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
         }}
       >
@@ -491,7 +582,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <Zap size={12} className="text-neon-gold" />
                       <span className="text-sm font-mono text-neon-gold">
-                        {RESOURCE_CONFIG[discoveryPopup].basePrice} CR
+                        {RESOURCE_CONFIG[discoveryPopup]?.basePrice || 0} CR
                       </span>
                     </div>
                   </div>
@@ -500,7 +591,7 @@ const CentralScene: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <MousePointer2 size={12} className="text-gray-300" />
                       <span className="text-sm font-mono text-gray-300">
-                        {RESOURCE_CONFIG[discoveryPopup].maxHits} {t_ui.hits_unit}
+                        {RESOURCE_CONFIG[discoveryPopup]?.maxHits || 0} {t_ui.hits_unit}
                       </span>
                     </div>
                   </div>

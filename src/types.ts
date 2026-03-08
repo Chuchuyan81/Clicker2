@@ -4,7 +4,10 @@ export type { Language, SectorId };
 
 export type ResourceType = 
   | "metal" | "ice" | "crystal" | "iridium" // Tier 1
-  | "rust_dust" | "red_obsidian" | "mars_ice" | "phobos_core"; // Tier 2
+  | "red_obsidian" | "martian_dust" // Tier 2
+  | "frozen_gas" | "liquid_metal_core" // Tier 3
+  | "ring_ice" | "dark_matter_t4" // Tier 4
+  | "antimatter" | "alien_relics"; // Tier 5
 export type DroneType = 'basic' | 'scout' | 'heavy';
 
 export interface Resource {
@@ -96,6 +99,22 @@ export interface GameState {
   currentSectorId: SectorId;
   discoveredResources: ResourceType[];
   radar: RadarState;
+  energyLevel: number; // 0-100 for Tier 4
+  hasSeenIntro: boolean;
+  tutorialStep: number;
+  corporateDebt: number;
+  gameLogs: LogEntry[];
+  manualClicks: number;
+  lastReadLogId: string | null;
+}
+
+export type LogType = 'INFO' | 'WARNING' | 'CORP';
+
+export interface LogEntry {
+  id: string;
+  type: LogType;
+  text: string;
+  timestamp: number;
 }
 
 export interface ClickableAsteroid {
