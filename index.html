@@ -11,24 +11,28 @@
     <script>
       // Suppression of non-critical extension errors (Chrome extensions, polyfills, etc.)
       window.addEventListener('unhandledrejection', (event) => {
-        if (event.reason && (
-          event.reason.message?.includes('Could not establish connection') ||
-          event.reason.message?.includes('Receiving end does not exist') ||
-          event.reason.stack?.includes('content.js') ||
-          event.reason.stack?.includes('polyfill.js')
-        )) {
+        const msg = event.reason?.message || '';
+        const stack = event.reason?.stack || '';
+        if (
+          msg.includes('Could not establish connection') ||
+          msg.includes('Receiving end does not exist') ||
+          stack.includes('content.js') ||
+          stack.includes('polyfill.js')
+        ) {
           event.stopImmediatePropagation();
           event.preventDefault();
         }
       });
       window.addEventListener('error', (event) => {
-        if (event.message?.includes('runtime.lastError') || event.filename?.includes('content.js') || event.filename?.includes('polyfill.js')) {
+        const msg = event.message || '';
+        const file = event.filename || '';
+        if (msg.includes('runtime.lastError') || file.includes('content.js') || file.includes('polyfill.js')) {
           event.stopImmediatePropagation();
           event.preventDefault();
         }
       }, true);
     </script>
-    <script type="module" crossorigin src="/Clicker2/assets/index-BOBJB56E.js"></script>
+    <script type="module" crossorigin src="/Clicker2/assets/index-Cs3C6vsR.js"></script>
     <link rel="stylesheet" crossorigin href="/Clicker2/assets/index-BeF5fmw7.css">
   </head>
   <body>
