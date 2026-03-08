@@ -273,7 +273,18 @@ export const useGameStore = create<GameStore>()(
 
         if (credits >= upgrade.cost && upgrade.level < maxLevel) {
           const newLevel = upgrade.level + 1;
-          const newCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, newLevel));
+          
+          // --- Soft Exponential Cost Scaling ---
+          // prevents Infinity and allows deeper progression
+          let newCost = 0;
+          if (newLevel <= 20) {
+            newCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, newLevel));
+          } else {
+            // After level 20, growth slows down to linear-exponential mix
+            const costAt20 = upgrade.baseCost * Math.pow(upgrade.costMultiplier, 20);
+            const linearFactor = upgrade.baseCost * upgrade.costMultiplier * (newLevel - 20);
+            newCost = Math.floor(costAt20 + linearFactor * Math.pow(1.1, newLevel - 20));
+          }
           
           set((state) => {
             const newUpgrades = {
@@ -435,7 +446,7 @@ export const useGameStore = create<GameStore>()(
       },
 
       manualMine: (id, x, y) => {
-        const { addResourceToStorage, asteroids, discoveredResources } = get();
+        const { addResourceToStorage, asteroids, discoveredResources, upgrades } = get();
         const asteroid = asteroids.find(a => a.id === id);
         if (!asteroid) return;
 
@@ -450,7 +461,9 @@ export const useGameStore = create<GameStore>()(
         }
 
         const isLastHit = asteroid.hits + 1 >= asteroid.maxHits;
-        const amount = isLastHit ? asteroid.maxHits * 2 : 0;
+        const refineryLevel = upgrades.refinery?.level || 0;
+        const baseAmount = asteroid.maxHits * 2;
+        const amount = isLastHit ? Math.floor(baseAmount * (1 + refineryLevel * 0.15)) : 0;
         
         let added = true;
         if (amount > 0) {
@@ -701,8 +714,12 @@ export const useGameStore = create<GameStore>()(
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
-          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources } = state;
+          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt } = state;
           
+          // --- Corporate Debt Interest (0.001% per minute) ---
+          const interestRatePerSec = 0.00001 / 60;
+          const newDebt = corporateDebt > 0 ? corporateDebt + (corporateDebt * interestRatePerSec * (deltaTime / 1000)) : 0;
+
           // --- Tier 4: Energy Logic ---
           let newEnergyLevel = state.energyLevel;
           if (currentSectorId === 'kuiper_belt') {
@@ -871,6 +888,22 @@ export const useGameStore = create<GameStore>()(
                   angle = Math.PI + Math.random() * Math.PI;
                   curveOffset = (Math.random() - 0.5) * 100;
                   distance = 500 + Math.random() * 300;
+
+                  // --- Auto-Target Best Resource ---
+                  const sector = SECTORS_CONFIG[currentSectorId];
+                  const discovered = state.discoveredResources;
+                  const availableInSector = sector.resources.filter(r => discovered.includes(r));
+                  
+                  if (availableInSector.length > 0) {
+                    // Find resource with highest base price
+                    const bestRes = availableInSector.reduce((best, current) => {
+                      const bestPrice = RESOURCE_CONFIG[best]?.basePrice || 0;
+                      const currentPrice = RESOURCE_CONFIG[current]?.basePrice || 0;
+                      return currentPrice > bestPrice ? current : best;
+                    }, availableInSector[0]);
+                    
+                    return { ...drone, progress, state: droneState, timer, angle, curveOffset, distance, targetResource: bestRes };
+                  }
                 } else {
                   timer = 0; // Ждем у базы (состояние unloading_wait с таймером 0 означает "готов, но склад полон")
                 }
@@ -887,6 +920,7 @@ export const useGameStore = create<GameStore>()(
             energyLevel: newEnergyLevel,
             tutorialStep: newTutorialStep,
             gameLogs: currentLogs,
+            corporateDebt: newDebt,
             lastSeen: now, // Обновляем lastSeen в каждом тике
             ...(resetBoost ? { boostMiningMultiplier: 1 } : {}),
           };

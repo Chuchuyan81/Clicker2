@@ -148,3 +148,13 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 65, 0.5);
 }
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  5%, 15%, 25%, 35%, 45% { opacity: 0.8; filter: brightness(0.8); }
+  10%, 20%, 30%, 40% { opacity: 1; filter: brightness(1.1); }
+}
+
+.low-energy-flicker {
+  animation: flicker 2s infinite ease-in-out;
+}

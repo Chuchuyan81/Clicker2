@@ -11,16 +11,19 @@ const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w
 
 const BaseHQ: React.FC<{ level: number, boostActive: boolean }> = ({ level, boostActive }) => {
   const language = useGameStore(state => state.language);
+  const energyLevel = useGameStore(state => state.energyLevel);
   const t = (translations as any)[language];
   const lvl = Math.max(1, Math.min(level, 3)) as 1 | 2 | 3;
   const sz = BASE_SIZES[lvl];
   const isHex = lvl >= 2;
   const isTier3 = lvl >= 3;
 
+  const isLowEnergy = energyLevel < 20;
+
   return (
     <div 
       className={`relative z-10 ${sz.w} ${sz.h} bg-space-800 flex items-center justify-center neon-border cursor-pointer active:scale-95 transition-transform
-        ${isHex ? 'clip-hex' : 'rounded-full'} ${isTier3 ? 'ring-2 ring-neon-gold/50' : ''}`}
+        ${isHex ? 'clip-hex' : 'rounded-full'} ${isTier3 ? 'ring-2 ring-neon-gold/50' : ''} ${isLowEnergy ? 'low-energy-flicker border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
       style={isHex ? { clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' } : undefined}
       onClick={(e) => {
         e.stopPropagation();
