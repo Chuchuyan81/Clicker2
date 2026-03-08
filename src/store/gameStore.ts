@@ -700,6 +700,26 @@ export const useGameStore = create<GameStore>()(
           }
 
           // --- Tutorial Progress Logic ---
+          let newTutorialStep = tutorialStep;
+          if (tutorialStep === 1) {
+            // Wait for some manual mining (any resources in storage)
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= 10) newTutorialStep = 2;
+          } else if (tutorialStep === 2) {
+            // Wait for storage to be full enough to send transport (or auto-send)
+            const totalStored = Object.values(storage.current).reduce((a, b) => a + b, 0);
+            if (totalStored >= storage.capacity * 0.2 && credits > 0) newTutorialStep = 3;
+          } else if (tutorialStep === 3) {
+            // Wait for drone purchase
+            if (drones.length > 1) newTutorialStep = 4;
+          } else if (tutorialStep === 4) {
+            // Wait for Ice discovery
+            if (discoveredResources.includes('ice')) newTutorialStep = 5;
+          } else if (tutorialStep === 5) {
+            // Wait for 5000 CR
+            if (credits >= 5000) newTutorialStep = 6;
+          }
+          // -------------------------------
 
           // --- Логика астероидов ---
           let newAsteroids = state.asteroids.map(a => {
