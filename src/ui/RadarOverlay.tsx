@@ -14,6 +14,13 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   red_obsidian: 'text-red-500',
   mars_ice: 'text-cyan-400',
   phobos_core: 'text-rose-600',
+  liquid_methane: 'text-emerald-500',
+  dark_matter: 'text-gray-400',
+  hexagonal_ice: 'text-blue-300',
+  frozen_nitrogen: 'text-indigo-400',
+  isotope_238: 'text-lime-500',
+  exotic_matter: 'text-violet-500',
+  pure_energy: 'text-white',
 };
 
 const RESOURCE_BG: Record<ResourceType, string> = {
@@ -25,6 +32,13 @@ const RESOURCE_BG: Record<ResourceType, string> = {
   red_obsidian: 'bg-red-600',
   mars_ice: 'bg-cyan-500',
   phobos_core: 'bg-rose-700',
+  liquid_methane: 'bg-emerald-600',
+  dark_matter: 'bg-gray-800',
+  hexagonal_ice: 'bg-blue-400',
+  frozen_nitrogen: 'bg-indigo-600',
+  isotope_238: 'bg-lime-600',
+  exotic_matter: 'bg-violet-600',
+  pure_energy: 'bg-white/80',
 };
 
 const RadarCell: React.FC<{ cell: RadarCellType }> = ({ cell }) => {

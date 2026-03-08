@@ -5,6 +5,7 @@ import { ResourceType } from '../types';
 import { translations } from '../translations';
 import { RESOURCE_CONFIG } from '../config/sectors';
 import Starfield from './Starfield';
+import { motion } from 'framer-motion';
 
 const BASE_SIZES = { 1: { w: 'w-24', h: 'h-24', inner: 'w-16 h-16' }, 2: { w: 'w-28', h: 'h-28', inner: 'w-20 h-20' }, 3: { w: 'w-32', h: 'h-32', inner: 'w-24 h-24' } } as const;
 

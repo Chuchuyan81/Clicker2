@@ -20,6 +20,13 @@ const RESOURCE_COLORS: Record<ResourceType, string> = {
   red_obsidian: 'bg-red-700',
   mars_ice: 'bg-cyan-600',
   phobos_core: 'bg-rose-900',
+  liquid_methane: 'bg-emerald-600',
+  dark_matter: 'bg-gray-800',
+  hexagonal_ice: 'bg-blue-400',
+  frozen_nitrogen: 'bg-indigo-600',
+  isotope_238: 'bg-lime-600',
+  exotic_matter: 'bg-violet-600',
+  pure_energy: 'bg-white',
 };
 
 const DRONE_SHOP_ITEMS: { type: DroneType, cost: number }[] = [
@@ -205,9 +212,9 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                         </h3>
                         {isDiscovered && (
                           <span className={`text-[8px] px-1.5 py-0.5 rounded border border-white/10 uppercase
-                            ${resId === 'metal' || resId === 'rust_dust' ? 'text-gray-400' : 
-                              resId === 'ice' || resId === 'red_obsidian' ? 'text-blue-400' : 
-                              resId === 'crystal' || resId === 'mars_ice' ? 'text-purple-400' : 'text-amber-400'}`}>
+                            ${rarityKey === 'common' ? 'text-gray-400' : 
+                              rarityKey === 'uncommon' ? 'text-blue-400' : 
+                              rarityKey === 'rare' ? 'text-purple-400' : 'text-amber-400'}`}>
                             {(t.ui.rarity_types as any)[rarityKey]}
                           </span>
                         )}
