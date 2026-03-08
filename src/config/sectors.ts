@@ -21,7 +21,6 @@ export interface ResourceData {
 export interface SectorConfig {
   id: SectorId;
   name: string;
-  subtitle: string;
   unlockCost: number;
   resources: ResourceId[]; // Какие ресурсы спавнятся в этом секторе
   maxUpgrades: {
@@ -179,7 +178,6 @@ export const SECTORS_CONFIG: Record<SectorId, SectorConfig> = {
   asteroid_belt: {
     id: 'asteroid_belt',
     name: 'Пояс Астероидов',
-    subtitle: 'The Frontier Edge',
     unlockCost: 0,
     resources: ['metal', 'ice', 'crystal', 'iridium'],
     maxUpgrades: { refinery: 10, storage: 10, hangar: 5 },
@@ -188,7 +186,6 @@ export const SECTORS_CONFIG: Record<SectorId, SectorConfig> = {
   mars_orbit: {
     id: 'mars_orbit',
     name: 'Орбита Марса',
-    subtitle: 'Red Dust Legacy',
     unlockCost: 50000,
     resources: ['rust_dust', 'red_obsidian', 'mars_ice', 'phobos_core'],
     maxUpgrades: { refinery: 25, storage: 25, hangar: 10 },
@@ -197,7 +194,6 @@ export const SECTORS_CONFIG: Record<SectorId, SectorConfig> = {
   saturn_rings: {
     id: 'saturn_rings',
     name: 'Кольца Сатурна',
-    subtitle: 'Golden Turbulence',
     unlockCost: 250000,
     resources: ['liquid_methane', 'dark_matter', 'hexagonal_ice'],
     maxUpgrades: { refinery: 40, storage: 40, hangar: 15 },
@@ -206,7 +202,6 @@ export const SECTORS_CONFIG: Record<SectorId, SectorConfig> = {
   kuiper_belt: {
     id: 'kuiper_belt',
     name: 'Пояс Койпера',
-    subtitle: 'Frozen Silence',
     unlockCost: 1500000,
     resources: ['frozen_nitrogen', 'isotope_238'],
     maxUpgrades: { refinery: 60, storage: 60, hangar: 20 },
@@ -215,7 +210,6 @@ export const SECTORS_CONFIG: Record<SectorId, SectorConfig> = {
   accretion_disk: {
     id: 'accretion_disk',
     name: 'Аккреционный диск',
-    subtitle: 'The Singularity',
     unlockCost: 10000000,
     resources: ['exotic_matter', 'pure_energy'],
     maxUpgrades: { refinery: 100, storage: 100, hangar: 30 },

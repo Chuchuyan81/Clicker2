@@ -86,7 +86,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
             onClick={() => setActiveTab('radar')}
             className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'radar' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
-            {t.ui.radar || 'Radar'}
+            {t.ui.radar}
           </button>
         </div>
 
@@ -247,10 +247,10 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
               </span>
             </div>
             {[
-              { id: 'battery', icon: <Battery size={24} />, name: t.radar_upgrades?.battery?.name || 'Battery', desc: t.radar_upgrades?.battery?.desc || 'More pulses per scan', cost: 200 * Math.pow(2, radar.upgrades.battery) },
-              { id: 'deepScan', icon: <Search size={24} />, name: t.radar_upgrades?.deepScan?.name || 'Deep Scan', desc: t.radar_upgrades?.deepScan?.desc || 'Find rarer resources', cost: sector.radarDeepScanBasePrices[radar.upgrades.deepScan], max: 3 },
-              { id: 'gridSize', icon: <Maximize size={24} />, name: t.radar_upgrades?.gridSize?.name || 'Beam Width', desc: t.radar_upgrades?.gridSize?.desc || 'Larger scanning area', cost: 1000 * Math.pow(4, radar.upgrades.gridSize), max: 2 },
-              { id: 'sonar', icon: <Zap size={24} />, name: t.radar_upgrades?.sonar?.name || 'Sonar', desc: t.radar_upgrades?.sonar?.desc || 'Auto-reveal resources on start', cost: 300 * Math.pow(2.5, radar.upgrades.sonar) },
+              { id: 'battery', icon: <Battery size={24} />, name: t.radar_upgrades.battery.name, desc: t.radar_upgrades.battery.desc, cost: 200 * Math.pow(2, radar.upgrades.battery) },
+              { id: 'deepScan', icon: <Search size={24} />, name: t.radar_upgrades.deepScan.name, desc: t.radar_upgrades.deepScan.desc, cost: sector.radarDeepScanBasePrices[radar.upgrades.deepScan], max: 3 },
+              { id: 'gridSize', icon: <Maximize size={24} />, name: t.radar_upgrades.gridSize.name, desc: t.radar_upgrades.gridSize.desc, cost: 1000 * Math.pow(4, radar.upgrades.gridSize), max: 2 },
+              { id: 'sonar', icon: <Zap size={24} />, name: t.radar_upgrades.sonar.name, desc: t.radar_upgrades.sonar.desc, cost: 300 * Math.pow(2.5, radar.upgrades.sonar) },
             ].map((upg) => {
               const level = radar.upgrades[upg.id as keyof typeof radar.upgrades];
               const isMax = (upg as any).max !== undefined && level >= (upg as any).max;

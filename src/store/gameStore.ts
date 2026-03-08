@@ -415,7 +415,7 @@ export const useGameStore = create<GameStore>()(
           }));
           // We'll handle the visual popup via a specific notification type or listener
           const t = (translations as any)[get().language];
-          get().addNotification('info', `NEW: ${t.resources[asteroid.resourceType]}`);
+          get().addNotification('info', t.notifications.new_resource.replace('{name}', t.resources[asteroid.resourceType]));
         }
 
         const isLastHit = asteroid.hits + 1 >= asteroid.maxHits;
@@ -500,7 +500,8 @@ export const useGameStore = create<GameStore>()(
         setTimeout(() => {
           set({ isWarping: false });
           const t = (translations as any)[get().language];
-          get().addNotification('info', t.notifications.warp_success.replace('{name}', targetSector.name));
+          const sectorName = t.warp_menu.sector_names[targetSector.id];
+          get().addNotification('info', t.notifications.warp_success.replace('{name}', sectorName));
         }, 1000);
       },
 
@@ -573,7 +574,8 @@ export const useGameStore = create<GameStore>()(
             
             addCredits(creditsEarned);
             newSessionEarnedCR += creditsEarned;
-            get().addNotification('info', `OVERFLOW: +${creditsEarned} CR`);
+            const t = (translations as any)[get().language];
+            get().addNotification('info', t.notifications.overflow.replace('{credits}', creditsEarned.toString()));
           }
 
           // Статистика сессии

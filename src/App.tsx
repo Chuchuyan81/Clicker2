@@ -176,7 +176,7 @@ const App: React.FC = () => {
           <Rocket size={18} className="text-neon-gold mb-1" />
           <span className="text-[8px] md:text-[10px] font-orbitron uppercase text-gray-400 text-center">{t.ui.send}</span>
           {currentStorage < storage.capacity * 0.2 && !transport.isActive && (
-            <span className="absolute -top-4 md:-top-6 text-[7px] md:text-[8px] text-gray-500 font-mono whitespace-nowrap">min 20%</span>
+            <span className="absolute -top-4 md:-top-6 text-[7px] md:text-[8px] text-gray-500 font-mono whitespace-nowrap">{t.ui.min_20}</span>
           )}
         </button>
 

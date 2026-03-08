@@ -42,10 +42,10 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <h2 className="text-3xl font-orbitron font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-                      WARP DRIVE MENU
+                      {t.warp_menu.title}
                     </h2>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] text-blue-400 font-mono tracking-[0.3em] uppercase opacity-70">SYSTEM_STATUS: ONLINE</span>
+                      <span className="text-[10px] text-blue-400 font-mono tracking-[0.3em] uppercase opacity-70">{t.warp_menu.system_status}</span>
                       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     </div>
                   </div>
@@ -54,7 +54,7 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
               
               <div className="flex items-center gap-8">
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] text-blue-400 font-orbitron tracking-widest uppercase opacity-50 mb-1">CURRENT_CREDITS</span>
+                  <span className="text-[10px] text-blue-400 font-orbitron tracking-widest uppercase opacity-50 mb-1">{t.warp_menu.current_credits}</span>
                   <div className="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20">
                     <Zap size={16} className="text-neon-gold" />
                     <span className="text-xl font-mono font-bold text-neon-gold tracking-tight">{credits.toLocaleString()} <span className="text-xs">CR</span></span>
@@ -95,11 +95,11 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
             {/* Footer */}
             <div className="relative z-20 px-10 py-4 border-t border-blue-500/20 bg-blue-950/30 flex justify-between items-center text-[10px] font-mono tracking-[0.2em] text-blue-400/60 uppercase">
               <div className="flex items-center gap-6">
-                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> NAVIGATION_LINK: STABLE</span>
-                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> ENCRYPTION: AES-256</span>
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> {t.warp_menu.footer.nav_link}</span>
+                <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" /> {t.warp_menu.footer.encryption}</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="animate-pulse">LOCAL_TIME: {new Date().toLocaleTimeString()}</span>
+                <span className="animate-pulse">{t.warp_menu.footer.local_time}: {new Date().toLocaleTimeString()}</span>
               </div>
             </div>
           </motion.div>
@@ -152,12 +152,12 @@ const SectorCard: React.FC<SectorCardProps> = ({
       <div className="relative z-10 mb-6">
         <div className="flex justify-between items-start mb-1">
           <h3 className={`text-xl font-orbitron font-bold tracking-widest uppercase ${isCurrent ? 'text-green-400' : 'text-white'}`}>
-            {sector.name}
+            {t.warp_menu.sector_names[sector.id]}
           </h3>
           {isCurrent && (
             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-[8px] font-orbitron text-green-400 animate-pulse">
               <CheckCircle2 size={10} />
-              YOU ARE HERE
+              {t.warp_menu.you_are_here}
             </div>
           )}
           {!isCurrent && !isUnlocked && (
@@ -167,7 +167,7 @@ const SectorCard: React.FC<SectorCardProps> = ({
           )}
         </div>
         <p className={`text-[10px] font-mono tracking-widest uppercase mb-4 ${isCurrent ? 'text-green-500/60' : 'text-blue-400/60'}`}>
-          {sector.subtitle}
+          {t.warp_menu.subtitles[sector.id]}
         </p>
       </div>
 
@@ -175,7 +175,7 @@ const SectorCard: React.FC<SectorCardProps> = ({
       <div className="relative z-10 mb-6">
         <div className="text-[9px] font-orbitron text-blue-400/50 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
           <Database size={10} />
-          RESOURCES_DETECTED
+          {t.warp_menu.resources_detected}
         </div>
         <div className="flex flex-wrap gap-2">
           {sector.resources.map((resId: string) => (
@@ -190,30 +190,30 @@ const SectorCard: React.FC<SectorCardProps> = ({
       {!isCurrent && (
         <div className="relative z-10 mb-8 p-4 bg-black/40 border border-white/5 rounded-xl space-y-3">
           <div className="text-[9px] font-orbitron text-blue-400/50 uppercase tracking-[0.2em] mb-1">
-            GATE_REQUIREMENTS
+            {t.warp_menu.gate_requirements}
           </div>
           
           <RequirementLine 
             icon={<Zap size={12} />}
-            label="CREDITS" 
+            label={t.warp_menu.gates.credits} 
             current={currentCredits} 
             target={sector.unlockCost} 
             isMet={canAfford}
           />
           <RequirementLine 
-            label="REFINERY" 
+            label={t.warp_menu.gates.refinery} 
             current={currentUpgrades.refinery.level} 
             target={currentSectorConfig.maxUpgrades.refinery} 
             isMet={refineryOk}
           />
           <RequirementLine 
-            label="CARGO" 
+            label={t.warp_menu.gates.cargo} 
             current={currentUpgrades.cargo_bay.level} 
             target={currentSectorConfig.maxUpgrades.storage} 
             isMet={storageOk}
           />
           <RequirementLine 
-            label="HANGAR" 
+            label={t.warp_menu.gates.hangar} 
             current={currentUpgrades.hangar.level} 
             target={currentSectorConfig.maxUpgrades.hangar} 
             isMet={hangarOk}
@@ -225,7 +225,7 @@ const SectorCard: React.FC<SectorCardProps> = ({
       <div className="relative z-10 mt-auto">
         {isCurrent ? (
           <div className="w-full py-3.5 text-center text-[10px] font-orbitron tracking-[0.3em] text-green-500/40 border border-green-500/10 rounded-xl bg-green-500/5 uppercase">
-            STATIONARY_STABLE
+            {t.warp_menu.stationary_stable}
           </div>
         ) : (
           <button
@@ -239,12 +239,12 @@ const SectorCard: React.FC<SectorCardProps> = ({
             {isUnlocked ? (
               <>
                 <Navigation2 size={14} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                INITIATE_WARP_JUMP
+                {t.warp_menu.initiate_jump}
               </>
             ) : (
               <>
                 <Lock size={14} />
-                SYSTEM_LOCKED
+                {t.warp_menu.system_locked}
               </>
             )}
           </button>

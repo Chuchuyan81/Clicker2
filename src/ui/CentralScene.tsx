@@ -265,7 +265,7 @@ const CentralScene: React.FC = () => {
             </div>
           )}
           <div className="mt-1 text-center text-[7px] text-blue-400/50 uppercase font-mono tracking-tighter">
-            CLICK BASE TO RECHARGE (+5%)
+            {t_ui.recharge_hint}
           </div>
         </div>
       )}

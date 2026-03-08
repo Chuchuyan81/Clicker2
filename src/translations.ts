@@ -50,6 +50,8 @@ export const translations = {
       available_resources: "Ресурсы",
       energy_level: "Уровень энергии",
       energy_low: "КРИТИЧЕСКИЙ ДЕФИЦИТ ЭНЕРГИИ",
+      recharge_hint: "НАЖМИТЕ НА БАЗУ ДЛЯ ЗАРЯДКИ (+5%)",
+      min_20: "мин 20%",
       rarity_types: {
         common: "Обычная",
         uncommon: "Средняя",
@@ -130,6 +132,8 @@ export const translations = {
       offline_income: "Пока вас не было, дроны добыли {resources} ресурсов и заработали {credits} CR!",
       radar_hazard: "ОПАСНОСТЬ! -3 импульса",
       warp_success: "Варп-прыжок завершен. Добро пожаловать в {name}!",
+      new_resource: "НОВЫЙ РЕСУРС: {name}",
+      overflow: "ПЕРЕПОЛНЕНИЕ: +{credits} CR",
     },
     menu: {
       continue: "Продолжить",
@@ -137,6 +141,42 @@ export const translations = {
       settings: "Настройки",
       confirm_new_game: "Начать новую игру? Текущий прогресс будет удален.",
       back: "Назад",
+    },
+    warp_menu: {
+      title: "МЕНЮ ВАРП-ПРЫЖКА",
+      system_status: "СТАТУС_СИСТЕМЫ: ОНЛАЙН",
+      current_credits: "ТЕКУЩИЕ_КРЕДИТЫ",
+      resources_detected: "ОБНАРУЖЕННЫЕ_РЕСУРСЫ",
+      gate_requirements: "ТРЕБОВАНИЯ_ПРЫЖКА",
+      initiate_jump: "ИНИЦИИРОВАТЬ ВАРП-ПРЫЖОК",
+      system_locked: "СИСТЕМА ЗАБЛОКИРОВАНА",
+      you_are_here: "ВЫ ЗДЕСЬ",
+      stationary_stable: "ПОЗИЦИЯ СТАБИЛЬНА",
+      footer: {
+        nav_link: "СВЯЗЬ_С_НАВИГАЦИЕЙ: СТАБИЛЬНО",
+        encryption: "ШИФРОВАНИЕ: AES-256",
+        local_time: "МЕСТНОЕ_ВРЕМЯ",
+      },
+      gates: {
+        credits: "КРЕДИТЫ",
+        refinery: "ЗАВОД",
+        cargo: "СКЛАД",
+        hangar: "АНГАР",
+      },
+      subtitles: {
+        asteroid_belt: "Край фронтира",
+        mars_orbit: "Наследие красной пыли",
+        saturn_rings: "Золотая турбулентность",
+        kuiper_belt: "Ледяная тишина",
+        accretion_disk: "Сингулярность",
+      },
+      sector_names: {
+        asteroid_belt: "Пояс Астероидов",
+        mars_orbit: "Орбита Марса",
+        saturn_rings: "Кольца Сатурна",
+        kuiper_belt: "Пояс Койпера",
+        accretion_disk: "Аккреционный диск",
+      }
     }
   },
   en: {
@@ -190,6 +230,8 @@ export const translations = {
       available_resources: "Resources",
       energy_level: "Energy Level",
       energy_low: "CRITICAL ENERGY DEFICIT",
+      recharge_hint: "CLICK BASE TO RECHARGE (+5%)",
+      min_20: "min 20%",
       rarity_types: {
         common: "Common",
         uncommon: "Uncommon",
@@ -270,6 +312,8 @@ export const translations = {
       offline_income: "While you were away, drones mined {resources} resources and earned {credits} CR!",
       radar_hazard: "HAZARD! -3 Pulses",
       warp_success: "Warp jump complete. Welcome to {name}!",
+      new_resource: "NEW RESOURCE: {name}",
+      overflow: "OVERFLOW: +{credits} CR",
     },
     menu: {
       continue: "Continue",
@@ -277,6 +321,42 @@ export const translations = {
       settings: "Settings",
       confirm_new_game: "Start new game? Current progress will be lost.",
       back: "Back",
+    },
+    warp_menu: {
+      title: "WARP DRIVE MENU",
+      system_status: "SYSTEM_STATUS: ONLINE",
+      current_credits: "CURRENT_CREDITS",
+      resources_detected: "RESOURCES_DETECTED",
+      gate_requirements: "GATE_REQUIREMENTS",
+      initiate_jump: "INITIATE WARP JUMP",
+      system_locked: "SYSTEM LOCKED",
+      you_are_here: "YOU ARE HERE",
+      stationary_stable: "STATIONARY STABLE",
+      footer: {
+        nav_link: "NAVIGATION_LINK: STABLE",
+        encryption: "ENCRYPTION: AES-256",
+        local_time: "LOCAL_TIME",
+      },
+      gates: {
+        credits: "CREDITS",
+        refinery: "REFINERY",
+        cargo: "CARGO",
+        hangar: "HANGAR",
+      },
+      subtitles: {
+        asteroid_belt: "The Frontier Edge",
+        mars_orbit: "Red Dust Legacy",
+        saturn_rings: "Golden Turbulence",
+        kuiper_belt: "Frozen Silence",
+        accretion_disk: "The Singularity",
+      },
+      sector_names: {
+        asteroid_belt: "Asteroid Belt",
+        mars_orbit: "Mars Orbit",
+        saturn_rings: "Saturn Rings",
+        kuiper_belt: "Kuiper Belt",
+        accretion_disk: "Accretion Disk",
+      }
     }
   }
 };

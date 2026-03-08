@@ -139,10 +139,10 @@ const RadarOverlay: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between max-w-4xl mx-auto w-full mb-8">
         <div className="flex items-center gap-6">
-          <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">
               <Battery size={14} className="text-neon-blue" />
-              {t.ui.battery_status || 'Energy Units'}
+              {t.ui.battery_status}
             </div>
             <div className="flex gap-1">
               {Array.from({ length: 15 }).map((_, i) => {
@@ -180,7 +180,7 @@ const RadarOverlay: React.FC = () => {
         <div className="flex items-center gap-4">
           {radar.sessionEarnedCR > 0 && (
             <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase font-orbitron text-gray-500">{t.ui.session_profit || 'Yield'}</span>
+              <span className="text-[10px] uppercase font-orbitron text-gray-500">{t.ui.session_profit}</span>
               <span className="text-neon-gold font-mono text-xl">+{Math.floor(radar.sessionEarnedCR)} CR</span>
             </div>
           )}
@@ -209,11 +209,11 @@ const RadarOverlay: React.FC = () => {
       <div className="max-w-2xl mx-auto w-full mt-8 flex justify-between items-center text-gray-500 font-orbitron text-[10px] tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2">
           <MousePointer2 size={12} />
-          {radar.clicksRemaining} {t.ui.clicks_remaining || 'Pulses Left'}
+          {radar.clicksRemaining} {t.ui.clicks_remaining}
         </div>
         <div className="animate-pulse flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-neon-blue" />
-          {t.ui.radar_scanning || 'Scanning Sector...'}
+          {t.ui.radar_scanning}
         </div>
       </div>
 
@@ -225,7 +225,7 @@ const RadarOverlay: React.FC = () => {
           className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-center items-center justify-center z-[210] p-4"
         >
           <div className="flex flex-col items-center gap-6 p-8 border-2 border-neon-blue rounded-2xl bg-space-950 shadow-[0_0_30px_rgba(0,242,255,0.2)] max-w-sm w-full">
-            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em] text-center">{t.ui.scan_complete || 'Scan Complete'}</h2>
+            <h2 className="text-3xl font-orbitron neon-text-blue uppercase tracking-[0.3em] text-center">{t.ui.scan_complete}</h2>
             
             {/* Resource Summary */}
             <div className="grid grid-cols-2 gap-3 w-full">
@@ -245,7 +245,7 @@ const RadarOverlay: React.FC = () => {
 
             {radar.sessionEarnedCR > 0 && (
               <div className="flex flex-col items-center border-t border-space-800 pt-4 w-full">
-                <span className="text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">{t.ui.total_profit || 'Overflow Profit'}</span>
+                <span className="text-gray-400 text-[10px] uppercase font-orbitron tracking-widest">{t.ui.total_profit}</span>
                 <span className="text-neon-gold text-2xl font-mono">+{Math.floor(radar.sessionEarnedCR)} CR</span>
               </div>
             )}
@@ -254,7 +254,7 @@ const RadarOverlay: React.FC = () => {
               onClick={closeRadar}
               className="w-full py-4 bg-neon-blue text-black font-orbitron uppercase tracking-widest rounded-lg hover:bg-cyan-400 transition-colors cursor-pointer"
             >
-              {t.ui.return_to_base || 'Return to Base'}
+              {t.ui.return_to_base}
             </button>
           </div>
         </motion.div>
