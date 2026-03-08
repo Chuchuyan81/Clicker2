@@ -12,12 +12,13 @@ interface DispatcherScreenProps {
 
 const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, onOpenStarmap }) => {
   const { 
-    corporateDebt, 
+    credits, 
     gameLogs, 
     hasSeenIntro, 
     completeIntro, 
     language,
-    exitToMenu
+    exitToMenu,
+    corporateDebt
   } = useGameStore();
 
   const [view, setView] = useState<'boot' | 'terminal'>(hasSeenIntro ? 'terminal' : 'boot');
@@ -29,25 +30,28 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
 
   const t = (translations as any)[language];
 
-  const introText = React.useMemo(() => language === 'ru' ? [
-    "СОЕДИНЕНИЕ С EXO-NET... [OK]",
-    "АВТОРИЗАЦИЯ: Диспетчер #7491. Допуск: МИНИМАЛЬНЫЙ.",
-    "ТЕКУЩИЙ ДОЛГ ПЕРЕД КОРПОРАЦИЕЙ: 999,999,999,999 CR.",
-    "",
-    "СООБЩЕНИЕ:",
-    "\"Добро пожаловать в Exo-Mine. Твое корыто пришвартовано в Поясе Астероидов.\"",
-    "\"План на сегодня: копай, продавай, не умирай. Нам нужны наши деньги.\"",
-    "\"Удачи, винтик.\""
-  ] : [
-    "CONNECTING TO EXO-NET... [OK]",
-    "AUTHORIZATION: Dispatcher #7491. Access: MINIMAL.",
-    "CURRENT DEBT TO CORPORATION: 999,999,999,999 CR.",
-    "",
-    "MESSAGE:",
-    "\"Welcome to Exo-Mine. Your bucket is docked in the Asteroid Belt.\"",
-    "\"Plan for today: dig, sell, don't die. We need our money.\"",
-    "\"Good luck, cog.\""
-  ], [language]);
+  const introText = React.useMemo(() => {
+    if (!t?.dispatcher) return [];
+    return language === 'ru' ? [
+      "СОЕДИНЕНИЕ С EXO-NET... [OK]",
+      "АВТОРИЗАЦИЯ: Диспетчер #7491. Допуск: МИНИМАЛЬНЫЙ.",
+      "ТЕКУЩИЙ ДОЛГ ПЕРЕД КОРПОРАЦИЕЙ: 999,999,999,999 CR.",
+      "",
+      "СООБЩЕНИЕ:",
+      "\"Добро пожаловать в Exo-Mine. Твое корыто пришвартовано в Поясе Астероидов.\"",
+      "\"План на сегодня: копай, продавай, не умирай. Нам нужны наши деньги.\"",
+      "\"Удачи, винтик.\""
+    ] : [
+      "CONNECTING TO EXO-NET... [OK]",
+      "AUTHORIZATION: Dispatcher #7491. Access: MINIMAL.",
+      "CURRENT DEBT TO CORPORATION: 999,999,999,999 CR.",
+      "",
+      "MESSAGE:",
+      "\"Welcome to Exo-Mine. Your bucket is docked in the Asteroid Belt.\"",
+      "\"Plan for today: dig, sell, don't die. We need our money.\"",
+      "\"Good luck, cog.\""
+    ];
+  }, [language, t]);
 
   // Boot sequence typewriter
   useEffect(() => {
@@ -89,6 +93,7 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
   };
 
   if (!isOpen && hasSeenIntro) return null;
+  if (!t?.dispatcher) return null;
 
   return (
     <AnimatePresence>
