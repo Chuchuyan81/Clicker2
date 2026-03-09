@@ -188,7 +188,7 @@ export const translations = {
     },
     tutorial: {
       step1: "Диспетчер, ваш первый дрон уже в работе, но этого мало. Кликните по пролетающему камню, чтобы ускорить добычу.",
-      step2: "Склад наполняется. Помните: транспорт сам не улетит, пока не будет куплена Автоматизация. Нажмите 'Отправить' при 20% заполнения.",
+      step2: "Склад наполняется. Помните: транспорт сам не улетит, пока не будет куплена Автоматизация. Нажмите 'Отправить' при не менее 20% заполнения.",
       step3: "Отлично. На эти гроши вы можете купить еще одного дрона в Улучшениях. Сделайте это.",
       step4: "Дроны тупые. Они не видят ценные породы без разведки. Откройте Радар и найдите Космический Лед.",
       step5: "Нам нужно больше прибыли. Копите на лицензию следующего сектора.",
@@ -384,7 +384,7 @@ export const translations = {
     },
     tutorial: {
       step1: "Dispatcher, your first drone is already at work, but it's not enough. Click on a flying rock to speed up mining.",
-      step2: "Storage is filling up. Remember: the transport won't launch on its own until Automation is purchased. Click 'Send' at 20% capacity.",
+      step2: "Storage is filling up. Remember: the transport won't launch on its own until Automation is purchased. Click 'Send' at at least 20% capacity.",
       step3: "Excellent. With these pennies, you can buy another drone in Upgrades. Do it.",
       step4: "Drones are dumb. They don't see valuable ores without scouting. Open the Radar and find some Space Ice.",
       step5: "We need more profit. Save up for the next sector license.",
