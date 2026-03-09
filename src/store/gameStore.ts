@@ -793,6 +793,8 @@ export const useGameStore = create<GameStore>()(
             return { ...a, x: nextX, y: nextY };
           }).filter(a => a.x > -10 && a.x < 110 && a.y > -10 && a.y < 110);
 
+          let newPityCounters = { ...pityCounters };
+
           if (newAsteroids.length < 5 && Math.random() < 0.02) {
             const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
             let x = 0, y = 0, angle = 0;
@@ -831,7 +833,6 @@ export const useGameStore = create<GameStore>()(
 
             // Обновление Pity Counters
             const selectedRarity = RESOURCE_CONFIG[selectedResource].rarity;
-            const newPityCounters = { ...pityCounters };
             // Сбрасываем счетчик выпавшей редкости
             newPityCounters[selectedRarity] = 0;
             // Увеличиваем счетчики остальных редкостей, которые МОГЛИ выпасть в этом секторе
