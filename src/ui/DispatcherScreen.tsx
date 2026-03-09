@@ -212,21 +212,21 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
                   onClick={() => { handleHaptic(); onOpenStarmap(); }}
                   className="flex flex-col items-center justify-center p-2 md:p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[60px] md:min-h-[72px]"
                 >
-                  <Map size={20} className="md:size-6 mb-1" />
+                  <Map className="w-5 h-5 md:w-6 md:h-6 mb-1" />
                   <span className="text-[8px] md:text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_starmap}</span>
                 </button>
                 <button 
                   onClick={() => { handleHaptic(); onClose(); }}
                   className="flex flex-col items-center justify-center p-2 md:p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[60px] md:min-h-[72px]"
                 >
-                  <ArrowLeft size={20} className="md:size-6 mb-1" />
+                  <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 mb-1" />
                   <span className="text-[8px] md:text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_base}</span>
                 </button>
                 <button 
                   onClick={() => { handleHaptic(); exitToMenu(); }}
                   className="col-span-2 flex items-center justify-center gap-2 p-2 text-red-500/70 hover:text-red-500 transition-colors text-[10px] md:text-xs uppercase font-orbitron mt-1"
                 >
-                  <LogOut size={12} md:size={14} /> {t.dispatcher.logout}
+                  <LogOut className="w-3 h-3 md:w-3.5 md:h-3.5" /> {t.dispatcher.logout}
                 </button>
               </div>
 
