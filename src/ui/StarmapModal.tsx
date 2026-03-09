@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { X, Database, Zap, Navigation2, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { SECTORS_CONFIG, SectorId } from '../config/sectors';
 import { translations } from '../translations';
+import { formatNumber } from '../utils/format';
 
 interface StarmapModalProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
             />
             
             {/* Orbits Visualization (Blueprint Style) */}
-            <div className="absolute top-0 right-0 w-full h-[300px] opacity-[0.15] pointer-events-none overflow-hidden mix-blend-screen">
+            <div className="absolute top-0 right-0 w-full h-[150px] md:h-[300px] opacity-[0.15] pointer-events-none overflow-hidden mix-blend-screen">
               <svg className="w-full h-full" viewBox="0 0 1000 300">
                 {/* Central Sun */}
                 <circle cx="500" cy="450" r="100" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" className="text-blue-400" />
@@ -66,44 +67,44 @@ const StarmapModal: React.FC<StarmapModalProps> = ({ isOpen, onClose }) => {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] pointer-events-none z-10" />
 
             {/* Header */}
-            <div className="relative z-20 flex items-center justify-between px-10 py-8 border-b border-blue-500/20 bg-blue-950/20 backdrop-blur-md">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-                    <Navigation2 className="text-neon-blue animate-pulse" size={32} />
+            <div className="relative z-20 flex items-center justify-between px-4 md:px-10 py-4 md:py-8 border-b border-blue-500/20 bg-blue-950/20 backdrop-blur-md">
+              <div className="flex flex-col gap-1 md:gap-2 min-w-0">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <div className="p-2 md:p-3 bg-blue-500/10 rounded-xl border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)] shrink-0">
+                    <Navigation2 className="text-neon-blue animate-pulse w-5 h-5 md:w-8 md:h-8" />
                   </div>
-                  <div>
-                    <h2 className="text-3xl font-orbitron font-black text-white uppercase tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-                      {language === 'ru' ? 'КАРТА СИСТЕМЫ (BLUEPRINT)' : 'SYSTEM MAP (BLUEPRINT)'}
+                  <div className="min-w-0">
+                    <h2 className="text-sm md:text-3xl font-orbitron font-black text-white uppercase tracking-[0.1em] md:tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] truncate">
+                      {language === 'ru' ? 'КАРТА СИСТЕМЫ' : 'SYSTEM MAP'}
                     </h2>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] text-blue-400 font-mono tracking-[0.3em] uppercase opacity-70">{t.warp_menu.system_status}</span>
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[7px] md:text-[10px] text-blue-400 font-mono tracking-[0.2em] uppercase opacity-70">{t.warp_menu.system_status}</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 md:gap-8 shrink-0">
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] text-blue-400 font-orbitron tracking-widest uppercase opacity-50 mb-1">{t.warp_menu.current_credits}</span>
-                  <div className="flex items-center gap-3 bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20">
-                    <Zap size={16} className="text-neon-gold" />
-                    <span className="text-xl font-mono font-bold text-neon-gold tracking-tight">{credits.toLocaleString()} <span className="text-xs">CR</span></span>
+                  <span className="text-[7px] md:text-[10px] text-blue-400 font-orbitron tracking-widest uppercase opacity-50 mb-0.5">{t.warp_menu.current_credits}</span>
+                  <div className="flex items-center gap-1.5 md:gap-3 bg-blue-500/10 px-2 md:px-4 py-1 md:py-2 rounded-lg border border-blue-500/20">
+                    <Zap size={12} className="text-neon-gold md:size-4" />
+                    <span className="text-xs md:text-xl font-mono font-bold text-neon-gold tracking-tight">{formatNumber(credits)} <span className="text-[8px] md:text-xs">CR</span></span>
                   </div>
                 </div>
                 <button 
                   onClick={onClose} 
-                  className="group relative p-3 text-blue-400 hover:text-white transition-all cursor-pointer rounded-xl border border-blue-500/20 hover:border-blue-500/50 hover:bg-blue-500/10"
+                  className="group relative p-2 md:p-3 text-blue-400 hover:text-white transition-all cursor-pointer rounded-xl border border-blue-500/20 hover:border-blue-500/50 hover:bg-blue-500/10 shrink-0"
                 >
-                  <X size={24} />
+                  <X size={20} className="md:size-6" />
                   <div className="absolute inset-0 rounded-xl bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors" />
                 </button>
               </div>
             </div>
 
             {/* Sector Grid */}
-            <div className="relative z-20 p-10 overflow-y-auto custom-scrollbar flex-1 bg-gradient-to-b from-blue-950/10 to-transparent">
+            <div className="relative z-20 p-4 md:p-10 overflow-y-auto custom-scrollbar flex-1 bg-gradient-to-b from-blue-950/10 to-transparent">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {Object.values(SECTORS_CONFIG).map((sector, index) => (
                   <SectorCard 
@@ -231,6 +232,7 @@ const SectorCard: React.FC<SectorCardProps> = ({
             current={currentCredits} 
             target={sector.unlockCost} 
             isMet={canAfford}
+            isCredits
           />
           <RequirementLine 
             label={t.warp_menu.gates.refinery} 
@@ -286,19 +288,19 @@ const SectorCard: React.FC<SectorCardProps> = ({
   );
 };
 
-const RequirementLine: React.FC<{ icon?: React.ReactNode, label: string, current: number, target: number, isMet: boolean }> = ({ 
-  icon, label, current, target, isMet 
+const RequirementLine: React.FC<{ icon?: React.ReactNode, label: string, current: number, target: number, isMet: boolean, isCredits?: boolean }> = ({ 
+  icon, label, current, target, isMet, isCredits
 }) => (
   <div className="flex items-center justify-between font-mono">
-    <div className="flex items-center gap-2">
-      <div className={`text-[10px] uppercase ${isMet ? 'text-blue-400/70' : 'text-red-400/70'}`}>
+    <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className={`text-[9px] md:text-[10px] uppercase truncate ${isMet ? 'text-blue-400/70' : 'text-red-400/70'}`}>
         {label}:
       </div>
     </div>
-    <div className="flex items-center gap-2 text-[10px]">
-      <span className={isMet ? 'text-green-400 font-bold' : 'text-red-500'}>{current >= 1000 ? (current/1000).toFixed(1) + 'k' : current}</span>
+    <div className="flex items-center gap-1 md:gap-2 text-[9px] md:text-[10px] shrink-0 ml-2">
+      <span className={isMet ? 'text-green-400 font-bold' : 'text-red-500'}>{isCredits ? formatNumber(current) : current}</span>
       <span className="text-white/20">/</span>
-      <span className="text-white/80">{target >= 1000 ? (target/1000).toFixed(1) + 'k' : target}</span>
+      <span className="text-white/80">{isCredits ? formatNumber(target) : target}</span>
       <div className={`ml-1 ${isMet ? 'text-green-400' : 'text-red-500/50'}`}>
         {isMet ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
       </div>

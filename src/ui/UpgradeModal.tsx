@@ -5,6 +5,8 @@ import { DroneType, ResourceType } from '../types';
 import { translations } from '../translations';
 import { SECTORS_CONFIG, RESOURCE_CONFIG, ResourceId } from '../config/sectors';
 
+import { formatNumber } from '../utils/format';
+
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -47,48 +49,50 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className="bg-space-800 border-2 border-neon-blue rounded-2xl w-full max-w-2xl overflow-hidden shadow-[0_0_30px_rgba(0,242,255,0.2)]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-space-700 bg-space-900/50">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-orbitron neon-text-blue uppercase tracking-wider">{t.ui.control_center}</h2>
-            <div className="px-3 py-1 bg-space-800 rounded-lg border border-space-600">
-              <span className="text-neon-gold font-mono">{credits.toLocaleString()} CR</span>
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-space-700 bg-space-900/50">
+          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 min-w-0">
+            <h2 className="text-sm md:text-xl font-orbitron neon-text-blue uppercase tracking-wider truncate">
+              {t.ui.control_center}
+            </h2>
+            <div className="px-2 py-0.5 md:px-3 md:py-1 bg-space-800 rounded-lg border border-space-600 shrink-0 w-fit">
+              <span className="text-neon-gold font-mono text-xs md:text-base">{formatNumber(credits)} CR</span>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1 hover:bg-space-700 rounded-md">
+          <button onClick={onClose} className="shrink-0 ml-2 text-gray-400 hover:text-white transition-colors cursor-pointer p-2 hover:bg-space-700 rounded-md">
             <X size={24} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-space-700">
+        <div className="flex border-b border-space-700 overflow-x-auto no-scrollbar shrink-0">
           <button
             onClick={() => setActiveTab('upgrades')}
-            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'upgrades' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+            className={`flex-1 min-w-[70px] py-3 font-orbitron text-[8px] md:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'upgrades' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.base_upgrades}
           </button>
           <button
             onClick={() => setActiveTab('drones')}
-            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'drones' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+            className={`flex-1 min-w-[70px] py-3 font-orbitron text-[8px] md:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'drones' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.drone_fleet} ({drones.length}/{maxDrones})
           </button>
           <button
             onClick={() => setActiveTab('archive')}
-            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'archive' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+            className={`flex-1 min-w-[70px] py-3 font-orbitron text-[8px] md:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'archive' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.archive}
           </button>
           <button
             onClick={() => setActiveTab('radar')}
-            className={`flex-1 py-3 font-orbitron text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'radar' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
+            className={`flex-1 min-w-[70px] py-3 font-orbitron text-[8px] md:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${activeTab === 'radar' ? 'bg-neon-blue/10 text-neon-blue border-b-2 border-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {t.ui.radar}
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 h-[400px] overflow-y-auto bg-space-900/20">
+        <div className="p-4 md:p-6 h-[50vh] md:h-[400px] overflow-y-auto bg-space-900/20">
           {activeTab === 'upgrades' ? (
             <div className="grid gap-4">
               {Object.values(upgrades).map((upgrade) => {
@@ -127,7 +131,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                       {upgrade.level >= maxLevel ? t.ui.max_level : (
                         <>
                           <span>{t.ui.upgrade}</span>
-                          <span className="text-neon-gold">{upgrade.cost.toLocaleString()} CR</span>
+                          <span className="text-neon-gold">{formatNumber(upgrade.cost)} CR</span>
                         </>
                       )}
                     </button>
@@ -174,7 +178,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                           'bg-space-700 border border-space-600 text-gray-500 cursor-not-allowed opacity-50'}`}
                     >
                       <span>{t.ui.purchase}</span>
-                      <span className="text-neon-gold">{item.cost.toLocaleString()} CR</span>
+                      <span className="text-neon-gold">{formatNumber(item.cost)} CR</span>
                     </button>
                   </div>
                 );
@@ -221,7 +225,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                         <div className="flex gap-4 items-center">
                           <div className="flex items-center gap-1.5">
                             <Zap size={10} className="text-neon-gold" />
-                            <span className="text-[10px] font-mono text-neon-gold">{res.basePrice} CR</span>
+                            <span className="text-[10px] font-mono text-neon-gold">{formatNumber(res.basePrice)} CR</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-gray-400">
                             <MousePointer2 size={10} />
@@ -279,7 +283,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, initialTab
                     {isMax ? t.ui.max_level : (
                       <>
                         <span>{t.ui.upgrade}</span>
-                        <span className="text-neon-gold">{Math.floor(upg.cost).toLocaleString()} CR</span>
+                        <span className="text-neon-gold">{formatNumber(Math.floor(upg.cost))} CR</span>
                       </>
                     )}
                   </button>

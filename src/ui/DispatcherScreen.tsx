@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import { translations } from '../translations';
 import { Terminal, AlertTriangle, ShieldAlert, Map, ArrowLeft, LogOut, Info } from 'lucide-react';
+import { formatNumber } from '../utils/format';
 
 interface DispatcherScreenProps {
   isOpen: boolean;
@@ -160,15 +161,15 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
                   <span className="text-[10px] uppercase tracking-tighter opacity-70">{t.dispatcher.debt_label}</span>
                   <ShieldAlert size={14} className="animate-pulse text-red-500" />
                 </div>
-                <div className="text-3xl md:text-5xl font-mono text-red-500 flex items-baseline gap-2 overflow-hidden">
-                  <span className="shrink-0">CR</span>
+                <div className="text-xl md:text-5xl font-mono text-red-500 flex items-baseline gap-2 overflow-hidden">
+                  <span className="shrink-0 text-xs md:text-xl">CR</span>
                   <motion.span 
                     key={corporateDebt}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="tabular-nums font-bold"
+                    className="tabular-nums font-bold truncate"
                   >
-                    {Math.floor(corporateDebt).toLocaleString()}
+                    {formatNumber(corporateDebt)}
                   </motion.span>
                 </div>
               </div>
@@ -206,26 +207,26 @@ const DispatcherScreen: React.FC<DispatcherScreenProps> = ({ isOpen, onClose, on
               </div>
 
               {/* Bottom Bar: Nav Panel */}
-              <div className="p-4 grid grid-cols-2 gap-3 border-t border-[#00FF41]/30 bg-black">
+              <div className="p-3 md:p-4 grid grid-cols-2 gap-2 md:gap-3 border-t border-[#00FF41]/30 bg-black shrink-0">
                 <button 
                   onClick={() => { handleHaptic(); onOpenStarmap(); }}
-                  className="flex flex-col items-center justify-center p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[72px]"
+                  className="flex flex-col items-center justify-center p-2 md:p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[60px] md:min-h-[72px]"
                 >
-                  <Map size={24} className="mb-1" />
-                  <span className="text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_starmap}</span>
+                  <Map size={20} className="md:size-6 mb-1" />
+                  <span className="text-[8px] md:text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_starmap}</span>
                 </button>
                 <button 
                   onClick={() => { handleHaptic(); onClose(); }}
-                  className="flex flex-col items-center justify-center p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[72px]"
+                  className="flex flex-col items-center justify-center p-2 md:p-4 border border-[#00FF41] hover:bg-[#00FF41]/10 active:bg-[#00FF41]/20 rounded-lg transition-colors min-h-[60px] md:min-h-[72px]"
                 >
-                  <ArrowLeft size={24} className="mb-1" />
-                  <span className="text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_base}</span>
+                  <ArrowLeft size={20} className="md:size-6 mb-1" />
+                  <span className="text-[8px] md:text-[10px] uppercase font-orbitron tracking-tighter">{t.dispatcher.nav_base}</span>
                 </button>
                 <button 
                   onClick={() => { handleHaptic(); exitToMenu(); }}
-                  className="col-span-2 flex items-center justify-center gap-2 p-3 text-red-500/70 hover:text-red-500 transition-colors text-xs uppercase font-orbitron mt-2"
+                  className="col-span-2 flex items-center justify-center gap-2 p-2 text-red-500/70 hover:text-red-500 transition-colors text-[10px] md:text-xs uppercase font-orbitron mt-1"
                 >
-                  <LogOut size={14} /> {t.dispatcher.logout}
+                  <LogOut size={12} md:size={14} /> {t.dispatcher.logout}
                 </button>
               </div>
 
