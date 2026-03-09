@@ -2,6 +2,8 @@ import { Language } from './translations';
 import { SectorId } from './config/sectors';
 export type { Language, SectorId };
 
+export type RarityLevel = 'common' | 'uncommon' | 'rare' | 'legendary';
+
 export type ResourceType = 
   | "metal" | "ice" | "crystal" | "iridium" // Tier 1
   | "red_obsidian" | "martian_dust" // Tier 2
@@ -14,7 +16,7 @@ export interface Resource {
   id: ResourceType;
   name: string;
   basePrice: number;
-  rarity: number;
+  rarity: RarityLevel;
 }
 
 export type DroneState = 'flying_out' | 'offscreen_wait' | 'returning' | 'unloading_wait';
@@ -23,6 +25,7 @@ export type TransportState = 'idle' | 'flying_out' | 'offscreen_wait' | 'returni
 export interface Drone {
   id: string;
   type: DroneType;
+  tier: number;
   speed: number;        // время полета в одну сторону в секундах
   miningRate: number;   // ресурсов за цикл
   capacity: number;
@@ -102,6 +105,8 @@ export interface GameState {
   energyLevel: number; // 0-100 for Tier 4
   hasSeenIntro: boolean;
   tutorialStep: number;
+  pityCounters: Record<RarityLevel, number>;
+  boostCooldownEndTime: number;
   corporateDebt: number;
   gameLogs: LogEntry[];
   manualClicks: number;

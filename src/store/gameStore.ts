@@ -91,7 +91,7 @@ const INITIAL_RESOURCES: Record<ResourceType, Resource> = Object.entries(RESOURC
     id: id as ResourceType,
     name: data.nameRu,
     basePrice: data.basePrice,
-    rarity: data.spawnChance,
+    rarity: data.rarity,
   };
   return acc;
 }, {} as Record<ResourceType, Resource>);
@@ -126,6 +126,8 @@ const INITIAL_STATE_DATA = {
   baseLevel: 1,
   boostEndTime: 0,
   boostMiningMultiplier: 1,
+  boostCooldownEndTime: 0,
+  pityCounters: { common: 0, uncommon: 0, rare: 0, legendary: 0 },
   lastSaleTimestamp: 0,
   resources: INITIAL_RESOURCES,
   automationEnabled: false,
@@ -136,6 +138,7 @@ const INITIAL_STATE_DATA = {
     {
       id: 'drone-1',
       type: 'basic' as DroneType,
+      tier: 1,
       speed: 3,
       miningRate: 5,
       capacity: 50,
@@ -230,10 +233,16 @@ export const useGameStore = create<GameStore>()(
         ...(type === 'sale' ? { lastSaleTimestamp: Date.now() } : {}),
       })),
 
-      activateMiningBurst: () => set((state) => ({
-        boostEndTime: Date.now() + BOOST_DURATION_MS,
-        boostMiningMultiplier: BOOST_MINING_MULTIPLIER,
-      })),
+      activateMiningBurst: () => {
+        const now = Date.now();
+        if (now < get().boostCooldownEndTime) return; // Проверка кулдауна
+        
+        set({
+          boostEndTime: now + 10000,
+          boostCooldownEndTime: now + 130000, // 120 секунд кулдаун (10с работа + 120с откат)
+          boostMiningMultiplier: 2.0, // Строго x2 на добычу
+        });
+      },
 
       buyDrone: (type) => {
         const { credits, drones, upgrades } = get();
@@ -248,6 +257,7 @@ export const useGameStore = create<GameStore>()(
               {
                 id: `drone-${Math.random().toString(36).substr(2, 9)}`,
                 type,
+                tier: 1,
                 speed: config.speed,
                 miningRate: config.miningRate,
                 capacity: config.capacity,
@@ -375,81 +385,81 @@ export const useGameStore = create<GameStore>()(
       },
 
       applyOfflineProgress: (seconds: number) => {
-        const { drones, storage, multipliers, resources, automationEnabled, addCredits, language, radar, currentSectorId } = get();
-        const t = (translations as any)[language];
-        
-        // Tier 5 Bonus: 2.0x time multiplier
-        const effectiveSeconds = currentSectorId === 'kuiper_belt' ? seconds * 2 : seconds;
+        const state = get();
+        const { storage, transport, drones, multipliers, automationEnabled, currentSectorId } = state;
+        const sector = SECTORS_CONFIG[currentSectorId];
 
-        // Calculate offline radar energy recharge
-        let newEnergy = radar.energy;
-        let newEnergyTimer = radar.energyTimerMs + (effectiveSeconds * 1000);
+        // 1. Ограничения времени и штраф (Макс 8 часов, 50% дохода)
+        const cappedSeconds = Math.min(seconds, 28800);
+        const offlinePenalty = 0.5;
+        const effectiveSeconds = currentSectorId === 'kuiper_belt' ? cappedSeconds * 2 : cappedSeconds; // Tier 5 бонус
+
+        // 2. Взвешенная средняя ценность 1 единицы ресурса и средняя плотность
+        let expectedValuePerVolume = 0;
+        let expectedHits = 0;
+        sector.resources.forEach(resId => {
+          const res = RESOURCE_CONFIG[resId];
+          expectedValuePerVolume += res.basePrice * res.spawnChance;
+          expectedHits += res.maxHits * res.spawnChance;
+        });
+
+        // 3. Потенциал Флота (Объем ресурсов в секунду)
+        let totalFleetVolumePerSec = 0;
+        drones.forEach(drone => {
+          const tierPenalty = Math.pow(0.5, Math.max(0, sector.tier - drone.tier));
+          const flightTime = (sector.averageDistance * 2) / (drone.speed * multipliers.speed);
+          const miningTime = expectedHits / (drone.miningRate * multipliers.miningRate * tierPenalty);
+          const cycleTime = flightTime + miningTime;
+          totalFleetVolumePerSec += drone.capacity / cycleTime;
+        });
+
+        // 4. Потенциал Логистики (Сколько транспорт может вывезти в секунду)
+        const transportCycleTime = transport.travelTime * 2;
+        let transportVolumePerSec = storage.capacity / transportCycleTime;
         
-        while (newEnergy < radar.maxEnergy && newEnergyTimer >= radar.rechargeRateMs) {
+        // Если нет автоматизации, логистика в оффлайне простаивает (штраф 80%)
+        if (!automationEnabled) {
+          transportVolumePerSec *= 0.2;
+        }
+
+        // 5. Итоговый расчет (Берем "Бутылочное горлышко")
+        const effectiveVolumePerSec = Math.min(totalFleetVolumePerSec, transportVolumePerSec);
+        const grossIncome = effectiveVolumePerSec * expectedValuePerVolume * multipliers.price * effectiveSeconds;
+        
+        const finalIncome = Math.floor(grossIncome * offlinePenalty);
+
+        if (finalIncome > 0) {
+          get().addCredits(finalIncome);
+          get().reduceDebt(finalIncome);
+          
+          const t = (translations as any)[state.language];
+          get().addNotification('info', t.notifications.offline_income
+              .replace('{resources}', Math.floor(effectiveVolumePerSec * effectiveSeconds).toLocaleString())
+              .replace('{credits}', finalIncome.toLocaleString())
+          );
+          
+          const bottleneck = totalFleetVolumePerSec > transportVolumePerSec ? 'Transport' : 'Fleet';
+          get().addLog(`Offline analysis complete. Bottleneck: ${bottleneck}. Earned: ${finalIncome} CR`, 'INFO');
+        }
+
+        // Обнови радарную энергию (как было в старом коде)
+        let newEnergy = state.radar.energy;
+        let newEnergyTimer = state.radar.energyTimerMs + (effectiveSeconds * 1000);
+        
+        while (newEnergy < state.radar.maxEnergy && newEnergyTimer >= state.radar.rechargeRateMs) {
           newEnergy += 1;
-          newEnergyTimer -= radar.rechargeRateMs;
+          newEnergyTimer -= state.radar.rechargeRateMs;
         }
-        if (newEnergy >= radar.maxEnergy) newEnergyTimer = 0;
-        
-        // Calculate mined resources per type
-        const minedByType: Partial<Record<ResourceType, number>> = {};
-        drones.forEach(d => {
-          const amount = Math.floor(d.miningRate * multipliers.miningRate * effectiveSeconds);
-          minedByType[d.targetResource] = (minedByType[d.targetResource] || 0) + amount;
-        });
-        
-        const totalResourcesMined = Object.values(minedByType).reduce((a, b) => a + b, 0);
-        let earnedCredits = 0;
-        const newStorageCurrent = { ...storage.current };
-        const capacity = storage.capacity;
-        
-        // Add to storage
-        Object.entries(minedByType).forEach(([type, amount]) => {
-          const resType = type as ResourceType;
-          newStorageCurrent[resType] = (newStorageCurrent[resType] || 0) + amount;
-        });
+        if (newEnergy >= state.radar.maxEnergy) newEnergyTimer = 0;
 
-        const currentTotal = Object.values(newStorageCurrent).reduce((a, b) => a + b, 0);
-        
-        if (automationEnabled && currentTotal > capacity * 0.8) {
-        // Sell everything
-        Object.entries(newStorageCurrent).forEach(([type, amount]) => {
-          const resType = type as ResourceType;
-          if (resources[resType]) {
-            earnedCredits += amount * resources[resType].basePrice * multipliers.price;
-          }
-          newStorageCurrent[resType] = 0;
+        set({
+          radar: {
+            ...state.radar,
+            energy: newEnergy,
+            energyTimerMs: newEnergyTimer
+          },
+          lastSeen: Date.now()
         });
-        } else if (currentTotal > capacity) {
-          // Cap storage proportionally
-          const factor = capacity / currentTotal;
-          Object.keys(newStorageCurrent).forEach(type => {
-            const resType = type as ResourceType;
-            newStorageCurrent[resType] = Math.floor(newStorageCurrent[resType] * factor);
-          });
-        }
-
-        if (totalResourcesMined > 0 || earnedCredits > 0) {
-          if (earnedCredits > 0) addCredits(earnedCredits);
-          set((state) => ({
-            storage: {
-              ...state.storage,
-              current: newStorageCurrent
-            },
-            radar: {
-              ...state.radar,
-              energy: newEnergy,
-              energyTimerMs: newEnergyTimer
-            },
-            lastSeen: Date.now()
-          }));
-
-          const msg = t.notifications.offline_income
-            .replace('{resources}', totalResourcesMined.toLocaleString())
-            .replace('{credits}', Math.floor(earnedCredits).toLocaleString());
-            
-          get().addNotification('info', msg);
-        }
       },
 
       manualMine: (id, x, y) => {
@@ -722,7 +732,7 @@ export const useGameStore = create<GameStore>()(
       updateDrones: (deltaTime) => {
         set((state) => {
           const now = Date.now();
-          const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt, manualClicks } = state;
+            const { currentSectorId, tutorialStep, credits, storage, drones, discoveredResources, corporateDebt, manualClicks, pityCounters } = state;
           
           // --- Corporate Debt Interest (Disabled) ---
           const newDebt = corporateDebt;
@@ -794,27 +804,42 @@ export const useGameStore = create<GameStore>()(
             const { currentSectorId } = get();
             const sectorResources = SECTORS_CONFIG[currentSectorId].resources;
             
-            // Расчет общего веса для вероятностей
-            let totalWeight = 0;
-            const resDataList = sectorResources.map(id => {
+            // --- Генерация астероидов (PRNG с Pity Timer) ---
+            let selectedResource: ResourceType = sectorResources[0];
+            let maxHits = 1;
+
+            // Расчет динамических шансов с учетом Pity Counters
+            const candidates = sectorResources.map(id => {
               const data = RESOURCE_CONFIG[id];
-              totalWeight += data.spawnChance;
-              return { weight: data.spawnChance, ...data };
+              // Базовый шанс + накопленный Pity Timer (ограничен макс 3х базового шанса)
+              const actualChance = Math.min(data.spawnChance * 3, data.spawnChance + (pityCounters[data.rarity] * 0.01));
+              return { id, data, actualChance };
             });
 
-            const rand = Math.random() * totalWeight;
-            let resType: ResourceType = sectorResources[0];
-            let maxHits = 1;
+            const totalWeight = candidates.reduce((sum, c) => sum + c.actualChance, 0);
+            let rand = Math.random() * totalWeight;
             let currentWeight = 0;
 
-            for (const res of resDataList) {
-              currentWeight += res.weight;
+            for (const c of candidates) {
+              currentWeight += c.actualChance;
               if (rand <= currentWeight) {
-                resType = res.id as ResourceType;
-                maxHits = res.maxHits;
+                selectedResource = c.id as ResourceType;
+                maxHits = c.data.maxHits;
                 break;
               }
             }
+
+            // Обновление Pity Counters
+            const selectedRarity = RESOURCE_CONFIG[selectedResource].rarity;
+            const newPityCounters = { ...pityCounters };
+            // Сбрасываем счетчик выпавшей редкости
+            newPityCounters[selectedRarity] = 0;
+            // Увеличиваем счетчики остальных редкостей, которые МОГЛИ выпасть в этом секторе
+            candidates.forEach(c => {
+              if (c.data.rarity !== selectedRarity) {
+                newPityCounters[c.data.rarity] += 1;
+              }
+            });
 
             newAsteroids.push({
               id: `ast-${Math.random().toString(36).substr(2, 9)}`,
@@ -823,7 +848,7 @@ export const useGameStore = create<GameStore>()(
               speed: 1.0 + Math.random() * 2,
               hits: 0,
               maxHits,
-              resourceType: resType
+              resourceType: selectedResource
             });
           }
           // ------------------------
@@ -860,7 +885,8 @@ export const useGameStore = create<GameStore>()(
             // deltaTime is in ms
             if (droneState === 'flying_out' || droneState === 'returning') {
               // Скорость полета зависит от базовой скорости, буста и пенальти энергии
-              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * miningMultiplier * energyPenalty;
+              // Overclock баффает ТОЛЬКО добычу, не скорость полета!
+              const progressIncrement = (deltaTime / 1000) / (drone.speed / speedMultiplier) * energyPenalty;
               progress += progressIncrement;
 
               if (progress >= 1) {
@@ -884,7 +910,12 @@ export const useGameStore = create<GameStore>()(
               timer -= deltaTime;
               if (timer <= 0) {
                 // Пытаемся разгрузиться
-                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? state.boostMiningMultiplier : 1) * energyPenalty;
+                const currentSector = SECTORS_CONFIG[currentSectorId];
+                // Штраф: -50% за каждый уровень отставания дрона от сектора
+                const tierDiff = Math.max(0, currentSector.tier - drone.tier);
+                const tierPenalty = Math.pow(0.5, tierDiff);
+
+                const amount = drone.miningRate * state.multipliers.miningRate * (boostActive ? 2 : 1) * tierPenalty * energyPenalty;
                 const added = get().addResourceToStorage(drone.targetResource, amount);
                 
                 if (added) {
@@ -924,6 +955,7 @@ export const useGameStore = create<GameStore>()(
             drones: newDrones,
             asteroids: newAsteroids,
             radar: newRadar,
+            pityCounters: newPityCounters,
             energyLevel: newEnergyLevel,
             tutorialStep: newTutorialStep,
             gameLogs: currentLogs,
